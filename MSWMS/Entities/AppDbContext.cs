@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Scan> Scans { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Role> Roles { get; set; }
+    public DbSet<Location> Locations { get; set; }
     
     public AppDbContext(DbContextOptionsBuilder? optionsBuilder = null)
     {
@@ -39,6 +40,10 @@ public class AppDbContext : DbContext
             .HasMany(x => x.Roles)
             .WithMany(x => x.Users);
         
+        modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+        modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+        modelBuilder.Entity<User>().HasOne(u => u.Location);
+        
         // SCAN RELATIONSHIPS
         modelBuilder.Entity<Scan>()
             .HasOne(x => x.Order)
@@ -59,8 +64,7 @@ public class AppDbContext : DbContext
         
         // ORDER RELATIONSHIPS
         modelBuilder.Entity<Order>()
-            .HasMany(x => x.Items)
-            .WithOne(x => x.Order);
+            .HasMany(x => x.Items);
         
         modelBuilder.Entity<Order>()
             .HasMany(x => x.Boxes)
@@ -76,9 +80,6 @@ public class AppDbContext : DbContext
         // ITEM RELATIONSHIPS
         modelBuilder.Entity<Item>()
             .HasMany(x => x.ItemInfo);
-
-        modelBuilder.Entity<Item>()
-            .HasOne(x => x.Order).WithMany();
         
         // LOCATIONS RELATIONSHIPS
         modelBuilder.Entity<Location>()
