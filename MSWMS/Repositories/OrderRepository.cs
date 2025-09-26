@@ -15,9 +15,9 @@ public interface IOrderRepository
 
 public class OrderRepository : IOrderRepository
 {
-    private readonly DbContext _context;
+    private readonly AppDbContext _context;
 
-    public OrderRepository(DbContext context)
+    public OrderRepository(AppDbContext context)
     {
         _context = context;
     }
