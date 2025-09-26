@@ -44,6 +44,19 @@ public class BoxService
             throw; // TODO handle exception
         }
     }
+
+    public async Task<Box?> GetBoxByNumberAndOrder(int boxNumber, int orderId)
+    {
+        try
+        {
+            await using var db = new AppDbContext();
+            return db.Boxes.FirstOrDefault(b => b.BoxNumber == boxNumber && b.Order.Id == orderId);
+        }
+        catch (Exception e)
+        {
+            throw;
+        }
+    }
     
     public async Task<Box?> GetBoxById(int id)
     {
