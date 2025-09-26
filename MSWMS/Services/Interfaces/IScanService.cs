@@ -12,7 +12,7 @@ public interface IScanService
 
     public void UpdateScan(Scan scan);*/
 
-    public Task<Scan.ScanStatus> ProcessBarcode(string barcode);
+    public Task<Scan.ScanStatus> ProcessScan(string barcode, int orderId, int boxNumber, int userId);
     
     public Task<Item?> GetItemByBarcodeAndOrder(string barcode, int orderId);
     
