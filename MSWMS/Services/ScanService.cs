@@ -5,7 +5,7 @@ namespace MSWMS.Services;
 
 public class ScanService : IScanService
 {
-    public Task<Scan.ScanStatus> ProcessBarcode(string barcode)
+    public async Task<Scan.ScanStatus> ProcessBarcode(string barcode)
     {
         throw new NotImplementedException();
     }
