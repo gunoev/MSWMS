@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Helpers;
 
 namespace MSWMS.Controllers
 {
@@ -93,10 +94,70 @@ namespace MSWMS.Controllers
 
             return NoContent();
         }
+        
+        
 
         private bool OrderExists(int id)
         {
             return _context.Orders.Any(e => e.Id == id);
+        }
+
+        // POST: api/Order/upload-excel
+        [HttpPost("upload-excel")]
+        public async Task<ActionResult<ExcelParsedOrder>> UploadExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
+            var parser = new OrderExcelParser();
+            var extension = Path.GetExtension(file.FileName);
+            var tempFilePath = Path.GetTempFileName() + extension;
+            
+            using (var stream = new FileStream(tempFilePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var parsedOrder = await parser.Parse(tempFilePath);
+
+            return parsedOrder;
+        }
+
+        // POST: api/Order/generate-test
+        [HttpPost("generate-test")]
+        public async Task<ActionResult<Order>> GenerateAndPostTestOrder()
+        {
+            _context.Locations.Add(new Location{Name = "Test Location"});
+            _context.Locations.Add(new Location{Name = "Test Location2"});
+            _context.SaveChanges();
+            _context.Roles.Add(new Role
+            {
+                Name = "AdminTest",
+                Type = Role.RoleType.Admin,
+            });
+            _context.SaveChanges();
+            _context.Users.Add(new User
+            {
+                Username = "Test User",
+                Status = Entities.User.UserStatus.Active,
+                Location = _context.Locations.First(e => e.Name == "Test Location"),
+                PasswordHash = "123",
+                Roles = new List<Role>(),
+            });
+            await _context.SaveChangesAsync();
+            var order = new Order
+            {
+                TransferOrderNumber = $"TO{DateTime.Now:yyyyMMddHHmmss}",
+                TransferShipmentNumber = $"TS{DateTime.Now:yyyyMMddHHmmss}",
+                Origin = _context.Locations.First(),
+                Destination = _context.Locations.Skip(1).First(),
+                ShipmentId = Guid.NewGuid().ToString(),
+                Type = Order.OrderType.Distribution,
+                CreatedBy = _context.Users.First(),
+                Items = new List<Item>()
+            };
+
+            return await PostOrder(order);
         }
     }
 }
