@@ -80,6 +80,13 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Item>()
             .HasOne(x => x.Order).WithMany();
         
+        // LOCATIONS RELATIONSHIPS
+        modelBuilder.Entity<Location>()
+            .HasMany(o => o.OriginOrders).WithOne();
+        
+        modelBuilder.Entity<Location>()
+            .HasMany(o => o.DestinationOrders).WithOne();
+
     }
 
 }
