@@ -9,8 +9,8 @@ public class ItemInfo
     public string? Description { get; set; }
     public string? UnitOfMeasure { get; set; }
     public string? Na { get; set; }
-    public double Price { get; set; }
-    public double DiscountPrice { get; set; }
-    public double DiscountPercentage { get; set; }
+    public decimal Price { get; set; }
+    public decimal DiscountPrice { get; set; }
+    public decimal DiscountPercentage { get; set; }
     public string? Currency { get; set; }
 }
