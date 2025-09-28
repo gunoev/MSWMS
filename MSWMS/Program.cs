@@ -10,7 +10,7 @@ builder.Services.AddControllers();
 
 // Регистрация AppDbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseInMemoryDatabase(builder.Configuration.GetConnectionString("TestConnection"))
+        options.UseSqlite("Data Source=mswms.db")
 );
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
