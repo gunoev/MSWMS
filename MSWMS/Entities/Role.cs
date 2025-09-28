@@ -13,6 +13,7 @@ public class Role
         Picker,
         Manager,
         Observer,
+        Operator,
         Dispatcher,
         Unknown,
     }
