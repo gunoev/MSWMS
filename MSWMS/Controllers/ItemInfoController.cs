@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Helpers;
 
 namespace MSWMS.Controllers
 {
@@ -92,6 +93,28 @@ namespace MSWMS.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        
+        // POST: api/Order/upload-csv
+        [HttpPost("upload-csv")]
+        [RequestSizeLimit(300_000_000)] // 300 MB
+        public async Task<ActionResult<object>> UploadExcel(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File is empty");
+
+            var parser = new ItemInfoParser();
+            var extension = Path.GetExtension(file.FileName);
+            var tempFilePath = Path.GetTempFileName() + extension;
+            
+            using (var stream = new FileStream(tempFilePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            parser.Parse(tempFilePath);
+
+            return 200;
         }
 
         private bool ItemInfoExists(int id)
