@@ -27,7 +27,7 @@ public class AppDbContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            optionsBuilder.UseInMemoryDatabase("MSWMS");
+            optionsBuilder.UseSqlite("Data Source=mswms.db");
         }
     }
 
@@ -79,7 +79,8 @@ public class AppDbContext : DbContext
 
         // ITEM RELATIONSHIPS
         modelBuilder.Entity<Item>()
-            .HasMany(x => x.ItemInfo);
+            .HasMany(x => x.ItemInfo)
+            .WithMany();
         
         // LOCATIONS RELATIONSHIPS
         modelBuilder.Entity<Location>()
