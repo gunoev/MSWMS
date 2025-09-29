@@ -15,13 +15,13 @@ public class CreateOrderRequest
     public string? Remark { get; set; }
     public required ICollection<CreateOrderItemRequest> Items { get; set; }
 
-    public Order ToEntity(CreateOrderRequest dto)
+    public Order ToEntity()
     {
         using var context = new AppDbContext();
         
-        var origin = context.Locations.Find(dto.OriginId);
-        var destination = context.Locations.Find(dto.DestinationId);
-        var user = context.Users.Find(dto.UserId);
+        var origin = context.Locations.Find(OriginId);
+        var destination = context.Locations.Find(DestinationId);
+        var user = context.Users.Find(UserId);
         
         if (origin is null)
         {
@@ -39,24 +39,24 @@ public class CreateOrderRequest
         
         var items = new List<Item>();
         
-        foreach (var item in dto.Items)
+        foreach (var item in Items)
         {
-            items.Add(item.ToEntity(item));
+            items.Add(item.ToEntity());
         }
         var order = new Order
         {
-            ShipmentId = dto.ShipmentId,
-            TransferOrderNumber = dto.TransferOrderNumber,
-            TransferShipmentNumber = dto.TransferShipmentNumber,
+            ShipmentId = ShipmentId,
+            TransferOrderNumber = TransferOrderNumber,
+            TransferShipmentNumber = TransferShipmentNumber,
             Status = Order.OrderStatus.New,
             CreatedDateTime = DateTime.Now,
-            Priority = dto.Priority,
-            Remark = dto.Remark,
+            Priority = Priority,
+            Remark = Remark,
             Items = items,
             Origin = origin,
             Destination = destination,
             CreatedBy = user,
-            Type = dto.Type,
+            Type = Type,
         };
 
         return order;

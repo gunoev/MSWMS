@@ -88,7 +88,7 @@ namespace MSWMS.Controllers
                 return BadRequest("Order with this shipment id already exists");
             }
 
-            var order = orderRequest.ToEntity(orderRequest);
+            var order = orderRequest.ToEntity();
            
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
