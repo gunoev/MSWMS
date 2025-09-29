@@ -33,7 +33,7 @@ public class AuthService : IAuthService
             return new AuthResult
             {
                 Success = false,
-                Message = "Пользователь не найден"
+                Message = "User not found"
             };
         }
         
@@ -43,7 +43,7 @@ public class AuthService : IAuthService
             return new AuthResult
             {
                 Success = false,
-                Message = "Неверный пароль"
+                Message = "Wrong password"
             };
         }
         
@@ -53,7 +53,7 @@ public class AuthService : IAuthService
             return new AuthResult
             {
                 Success = false,
-                Message = "Аккаунт не активен"
+                Message = "Inactive account"
             };
         }
         
@@ -75,7 +75,7 @@ public class AuthService : IAuthService
             return new AuthResult
             {
                 Success = false,
-                Message = "Пользователь с таким логином уже существует"
+                Message = "User with this username already exists"
             };
         }
         
@@ -85,13 +85,13 @@ public class AuthService : IAuthService
             return new AuthResult
             {
                 Success = false,
-                Message = "Пользователь с таким email уже существует"
+                Message = "User with this email already exists"
             };
         }
         
         // Получение локации по умолчанию
         var defaultLocation = await _dbContext.Locations.FirstOrDefaultAsync() 
-            ?? throw new InvalidOperationException("Не найдена локация по умолчанию");
+            ?? throw new InvalidOperationException("Default location not found.");
         
         // Создание пользователя
         var user = new User
@@ -142,7 +142,7 @@ public class AuthService : IAuthService
         }
         
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT ключ не настроен")
+            _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key no set up")
         ));
         
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
