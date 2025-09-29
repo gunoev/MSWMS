@@ -6,4 +6,5 @@ public class ScanRequest
     public required string Barcode { get; set; }
     public required int BoxNumber { get; set; }
     public required int OrderId { get; set; }
+    public required int UserId { get; set; }
 }
