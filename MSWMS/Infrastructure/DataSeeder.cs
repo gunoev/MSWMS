@@ -32,7 +32,7 @@ public static class DataSeeder
             var registerModel = new MSWMS.Models.Auth.RegisterModel
             {
                 Username = "admin",
-                Name = "Администратор",
+                Name = "Administrator",
                 Email = "admin@example.com",
                 Password = "Admin123!",
                 ConfirmPassword = "Admin123!"
@@ -50,6 +50,22 @@ public static class DataSeeder
                     await dbContext.SaveChangesAsync();
                 }
             }
+        }
+    }
+
+    public static async Task SeedDefaultLocation(AppDbContext dbContext)
+    {
+        if (!await dbContext.Locations.AnyAsync())
+        {
+            var defaultLocation = new Location
+            {
+                Name = "Warehouse Mar Roukouz",
+                Code = "W01",
+                ShortName = "W01"
+            };
+
+            dbContext.Locations.Add(defaultLocation);
+            await dbContext.SaveChangesAsync();
         }
     }
 }
