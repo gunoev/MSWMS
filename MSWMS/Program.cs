@@ -156,6 +156,7 @@ using (var scope = app.Services.CreateScope())
     var dbContext = services.GetRequiredService<AppDbContext>();
     var authService = services.GetRequiredService<IAuthService>();
     
+    await DataSeeder.SeedDefaultLocation(dbContext);
     await DataSeeder.SeedRoles(dbContext);
     await DataSeeder.SeedAdminUser(dbContext, authService);
 }
