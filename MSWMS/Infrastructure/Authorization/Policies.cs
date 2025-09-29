@@ -12,12 +12,12 @@ public static class Policies
     public static void AddPolicies(AuthorizationOptions options)
     {
         options.AddPolicy(RequireAdmin, policy =>
-            policy.RequireRole(Role.RoleType.Admin.ToString()));
+            policy.RequireRole(nameof(Role.RoleType.Admin)));
         
         options.AddPolicy(RequireManager, policy =>
-            policy.RequireRole(Role.RoleType.Manager.ToString(), Role.RoleType.Admin.ToString()));
+            policy.RequireRole(nameof(Role.RoleType.Manager), nameof(Role.RoleType.Admin)));
         
         options.AddPolicy(RequirePicker, policy =>
-            policy.RequireRole(Role.RoleType.Picker.ToString(), Role.RoleType.Manager.ToString(), Role.RoleType.Admin.ToString()));
+            policy.RequireRole(nameof(Role.RoleType.Picker), nameof(Role.RoleType.Manager), nameof(Role.RoleType.Admin)));
     }
 }
