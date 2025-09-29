@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Infrastructure.Helpers;
+using MSWMS.Models.Requests;
 
 namespace MSWMS.Controllers
 {
@@ -70,9 +71,25 @@ namespace MSWMS.Controllers
 
         // POST: api/Order
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        /*[HttpPost]
         public async Task<ActionResult<Order>> PostOrder(Order order)
         {
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetOrder", new { id = order.Id }, order);
+        }*/
+        
+        [HttpPost]
+        public async Task<ActionResult<Order>> PostOrder(CreateOrderRequest orderRequest)
+        {
+            if (_context.Orders.Any(o => o.ShipmentId == orderRequest.ShipmentId))
+            {
+                return BadRequest("Order with this shipment id already exists");
+            }
+
+            var order = orderRequest.ToEntity(orderRequest);
+           
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
@@ -123,7 +140,7 @@ namespace MSWMS.Controllers
             return parsedOrder;
         }
 
-        // POST: api/Order/generate-test
+        /*// POST: api/Order/generate-test
         [HttpPost("generate-test")]
         public async Task<ActionResult<Order>> GenerateAndPostTestOrder()
         {
@@ -158,6 +175,6 @@ namespace MSWMS.Controllers
             };
 
             return await PostOrder(order);
-        }
+        }*/
     }
 }
