@@ -9,6 +9,7 @@ public class ScanResponse
     public int BoxNumber { get; set; }
     public int OrderId { get; set; }
     public int UserId { get; set; }
+    public required string Username { get; set; }
     public required DateTime TimeStamp { get; set; }
     public Scan.ScanStatus Status { get; set; }
     

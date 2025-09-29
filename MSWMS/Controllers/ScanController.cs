@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
@@ -31,6 +32,7 @@ public class ScanController : ControllerBase
             TimeStamp = DateTime.Now,
             Status = status,
             BoxNumber = scanRequest.BoxNumber,
+            Username = _context.Users.AsNoTracking().First(u => u.Id == scanRequest.UserId).Username,
         };
 
         return response;
