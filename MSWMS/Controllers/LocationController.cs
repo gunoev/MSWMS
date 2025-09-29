@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Authorization;
 
 namespace MSWMS.Controllers;
 
@@ -38,6 +40,7 @@ public class LocationController : ControllerBase
     // PUT: api/Location/5
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPut("{id}")]
+    [Authorize(Policy = Policies.RequireManager)]
     public async Task<IActionResult> PutLocation(int id, Location location)
     {
         if (id != location.Id)
@@ -69,6 +72,7 @@ public class LocationController : ControllerBase
     // POST: api/Location
     // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
     [HttpPost]
+    [Authorize(Policy = Policies.RequireManager)]
     public async Task<ActionResult<Location>> PostLocation(Location location)
     {
         _context.Locations.Add(location);
@@ -79,8 +83,14 @@ public class LocationController : ControllerBase
     
     // DELETE: api/Location/5
     [HttpDelete("{id}")]
+    [Authorize(Policy = Policies.RequireManager)]
     public async Task<IActionResult> DeleteLocation(int id)
     {
+        if (id == 0)
+        {
+            return BadRequest("Cannot delete default location. Use update instead.");
+        }
+        
         var location = await _context.Locations.FindAsync(id);
         if (location == null)
         {
