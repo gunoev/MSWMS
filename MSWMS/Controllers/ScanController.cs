@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
 using MSWMS.Services.Interfaces;
@@ -20,8 +22,9 @@ public class ScanController : ControllerBase
         _scanService = scanService;
     }
 
-    // Auth
+    
     [HttpPost]
+    [Authorize(Policy = Policies.RequirePicker)]
     public async Task<ActionResult<ScanResponse>> PostScan(ScanRequest scanRequest)
     {
         var status = await _scanService.ProcessScan(scanRequest);

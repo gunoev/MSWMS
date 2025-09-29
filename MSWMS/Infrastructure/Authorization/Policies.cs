@@ -18,6 +18,6 @@ public static class Policies
             policy.RequireRole(Role.RoleType.Manager.ToString(), Role.RoleType.Admin.ToString()));
         
         options.AddPolicy(RequirePicker, policy =>
-            policy.RequireRole(Role.RoleType.Picker.ToString()));
+            policy.RequireRole(Role.RoleType.Picker.ToString(), Role.RoleType.Manager.ToString(), Role.RoleType.Admin.ToString()));
     }
 }
