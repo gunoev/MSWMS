@@ -1,4 +1,5 @@
 using MSWMS.Entities;
+using MSWMS.Models.Requests;
 
 namespace MSWMS.Services.Interfaces;
 
@@ -12,7 +13,7 @@ public interface IScanService
 
     public void UpdateScan(Scan scan);*/
 
-    public Task<Scan.ScanStatus> ProcessScan(string barcode, int orderId, int boxNumber, int userId);
+    public Task<Scan.ScanStatus> ProcessScan(ScanRequest request);
     
     public Task<Item?> GetItemByBarcodeAndOrder(string barcode, int orderId);
     
