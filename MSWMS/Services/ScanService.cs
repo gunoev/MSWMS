@@ -1,5 +1,6 @@
 using MSWMS.Entities;
 using MSWMS.Factories;
+using MSWMS.Models.Requests;
 using MSWMS.Services.Interfaces;
 
 namespace MSWMS.Services;
@@ -9,39 +10,44 @@ public class ScanService : IScanService
     private readonly BoxService _boxService =  new BoxService();
     private readonly OrderService _orderService =  new OrderService();
     private readonly UserService _userService =  new UserService();
-    public async Task<Scan.ScanStatus> ProcessScan(string barcode, int orderId, int boxNumber, int userId)
+    public async Task<Scan.ScanStatus> ProcessScan(ScanRequest request)
     {
-        var item = GetItemByBarcodeAndOrder(barcode, orderId).Result;
-        var order = _orderService.GetByIdAsync(orderId).Result;
-        var box = _boxService.GetBoxByNumberAndOrder(boxNumber, orderId).Result;
-        var user = _userService.GetUserByIdAsync(userId).Result;
-        if (box is null || box.User.Username != user?.Username)
+        var item = GetItemByBarcodeAndOrder(request.Barcode, request.OrderId).Result;
+        var order = _orderService.GetByIdAsync(request.OrderId).Result;
+        var box = _boxService.GetBoxByNumberAndOrder(request.BoxNumber, request.OrderId).Result;
+        var user = _userService.GetUserByIdAsync(request.UserId).Result;
+
+        if (order is null)
         {
-            box = BoxFactory.Create(boxNumber, order, user);
+            return Scan.ScanStatus.Error;
+        }
+        if (box is null || box.User.Username != user?.Username) // create new box increment box number
+        {
+            box = BoxFactory.Create(request.BoxNumber, order, user);
         }
 
         if (item == null)
         {
-            var scan = ScanFactory.CreateNotFound(barcode, item, box, order, user);
-            AddScanToOrder(scan, orderId);
+            var scan = ScanFactory.CreateNotFound(request.Barcode, item, box, order, user);
+            AddScanToOrder(scan, request.OrderId);
             return Scan.ScanStatus.NotFound;
         }
         else if (item != null && (GetScannedQuantity(item, order).Result < item.NeededQuantity))
         {
-            var scan =ScanFactory.CreateOk(barcode, item, box, order, user);
-            AddScanToOrder(scan, orderId);
+            var scan =ScanFactory.CreateOk(request.Barcode, item, box, order, user);
+            AddScanToOrder(scan, request.OrderId);
             return Scan.ScanStatus.Ok;
         }
         else if (item != null &&  (GetScannedQuantity(item, order).Result >= item.NeededQuantity))
         {
-            var scan = ScanFactory.CreateExcess(barcode, item, box, order, user);
-            AddScanToOrder(scan, orderId);
+            var scan = ScanFactory.CreateExcess(request.Barcode, item, box, order, user);
+            AddScanToOrder(scan, request.OrderId);
             return Scan.ScanStatus.Excess;
         }
         else
         {
-            var scan = ScanFactory.CreateError(barcode, item??null, box, order, user);
-            AddScanToOrder(scan, orderId);
+            var scan = ScanFactory.CreateError(request.Barcode, item??null, box, order, user);
+            AddScanToOrder(scan, request.OrderId);
             return Scan.ScanStatus.Error;
         }
     }
