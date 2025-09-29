@@ -129,8 +129,8 @@ namespace MSWMS.Controllers
             var parser = new OrderExcelParser();
             var extension = Path.GetExtension(file.FileName);
             var tempFilePath = Path.GetTempFileName() + extension;
-            
-            using (var stream = new FileStream(tempFilePath, FileMode.Create))
+
+            await using (var stream = new FileStream(tempFilePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
