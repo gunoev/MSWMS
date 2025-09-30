@@ -17,9 +17,9 @@ public interface IScanService
     
     public Task<Item?> GetItemByBarcodeAndOrder(string barcode, int orderId);
     
-    public void AddScanToOrder(Scan scan, int orderId);
+    public void AddScanToOrder(Scan scan, Order order);
     
-    public void DeleteScanFromOrder(Scan scan, int orderId);
+    public void DeleteScanFromOrder(Scan scan, Order order);
     
     /*
     public List<Scan> GetScans();
