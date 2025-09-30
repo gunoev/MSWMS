@@ -1,8 +1,10 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Infrastructure.Helpers;
 using MSWMS.Models.Requests;
+using MSWMS.Models.Responses;
 
 namespace MSWMS.Controllers
 {
@@ -11,17 +13,59 @@ namespace MSWMS.Controllers
     public class OrderController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public OrderController(AppDbContext context)
+        public OrderController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Order
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+        public async Task<ActionResult<OrderList>> GetOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return await _context.Orders.ToListAsync();
+            if (pageSize > 50)
+            {
+                return BadRequest("Maximum order per page is 50");
+            }
+            
+            var orders = await _context.Orders
+                .Include(o => o.Origin)
+                .Include(o => o.Destination)
+                .Include(o => o.CreatedBy)
+                .Include(o => o.Items)
+                .AsNoTracking()
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            
+            var ordersDto = new  List<OrderDto>();
+
+            foreach (var order in orders)
+            {
+                ordersDto.Add(_mapper.Map<OrderDto>(order));
+            }
+            var ordersList = new OrderList
+            {
+                Orders = ordersDto,
+                TotalItems = await _context.Orders.CountAsync(),
+                TotalPages = (int)Math.Ceiling(await _context.Orders.CountAsync() / (double)pageSize),
+                PageSize = pageSize,
+                CurrentPage = page
+            };
+            return ordersList;
+        }
+
+        [HttpGet("details/{id}")]
+        public async Task<ActionResult<Order?>> GetOrderDetails(int id)
+        {
+            return await _context.Orders
+                .AsSplitQuery()
+                .Include(o => o.Items)
+                .ThenInclude(i => i.ItemInfo)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(o => o.Id == id);
         }
 
         // GET: api/Order/5
@@ -88,7 +132,7 @@ namespace MSWMS.Controllers
                 return BadRequest("Order with this shipment id already exists");
             }
 
-            var order = orderRequest.ToEntity();
+            var order = orderRequest.ToEntity(_context).Result;
            
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
