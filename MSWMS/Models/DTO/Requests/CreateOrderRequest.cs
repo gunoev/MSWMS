@@ -15,10 +15,8 @@ public class CreateOrderRequest
     public string? Remark { get; set; }
     public required ICollection<CreateOrderItemRequest> Items { get; set; }
 
-    public Order ToEntity()
+    public async Task<Order> ToEntity(AppDbContext context)
     {
-        using var context = new AppDbContext();
-        
         var origin = context.Locations.Find(OriginId);
         var destination = context.Locations.Find(DestinationId);
         var user = context.Users.Find(UserId);
@@ -41,7 +39,7 @@ public class CreateOrderRequest
         
         foreach (var item in Items)
         {
-            items.Add(item.ToEntity());
+            items.Add(await item.ToEntity(context));
         }
         var order = new Order
         {
