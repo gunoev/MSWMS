@@ -61,6 +61,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Scan>()
             .HasOne(x => x.User)
             .WithMany();
+
+        modelBuilder.Entity<Scan>()
+            .HasIndex(s => s.TimeStamp);
         
         // ORDER RELATIONSHIPS
         modelBuilder.Entity<Order>()
@@ -81,6 +84,14 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Item>()
             .HasMany(x => x.ItemInfo)
             .WithMany();
+        
+        // ITEM INFO RELATIONSHIPS
+        modelBuilder.Entity<ItemInfo>()
+            .HasIndex(inf => inf.ItemNumber);
+        modelBuilder.Entity<ItemInfo>()
+            .HasIndex(inf => inf.Variant);
+        modelBuilder.Entity<ItemInfo>()
+            .HasIndex(inf => inf.Barcode);
         
         // LOCATIONS RELATIONSHIPS
         modelBuilder.Entity<Location>()
