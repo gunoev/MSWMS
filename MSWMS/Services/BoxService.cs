@@ -1,16 +1,23 @@
+using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 
 namespace MSWMS.Services;
 
 public class BoxService
 {
+    private readonly AppDbContext _context;
+    
+    public BoxService(AppDbContext context)
+    {
+        _context = context;
+    }
+    
     public async void AddBox(Box box)
     {
         try
         {
-            await using var db = new AppDbContext();
-            db.Boxes.Add(box);
-            await db.SaveChangesAsync();
+            _context.Boxes.Add(box);
+            await _context.SaveChangesAsync();
         }
         catch (Exception e)
         {
@@ -22,8 +29,7 @@ public class BoxService
     {
         try
         {
-            await using var db = new AppDbContext();
-            db.Boxes.Update(box);
+            _context.Boxes.Update(box);
         }
         catch (Exception e)
         {
@@ -35,9 +41,8 @@ public class BoxService
     {
         try
         {
-            await using var db = new AppDbContext();
-            db.Boxes.Remove(box);
-            await db.SaveChangesAsync();
+            _context.Boxes.Remove(box);
+            await _context.SaveChangesAsync();
         }
         catch (Exception e)
         {
@@ -49,8 +54,7 @@ public class BoxService
     {
         try
         {
-            await using var db = new AppDbContext();
-            return db.Boxes.FirstOrDefault(b => b.BoxNumber == boxNumber && b.Order.Id == orderId);
+            return await _context.Boxes.Include(b => b.User).FirstOrDefaultAsync(b => b.BoxNumber == boxNumber && b.Order.Id == orderId);
         }
         catch (Exception e)
         {
@@ -60,7 +64,6 @@ public class BoxService
     
     public async Task<Box?> GetBoxById(int id)
     {
-        await using var db = new AppDbContext();
-        return await db.Boxes.FindAsync(id);
+        return await _context.Boxes.FindAsync(id);
     }
 }
