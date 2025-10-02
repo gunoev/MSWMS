@@ -22,6 +22,13 @@ public class ScanController : ControllerBase
         _scanService = scanService;
     }
 
+    [HttpGet("{id}")]
+    [Authorize(Policy = Policies.RequirePicker)]
+    public async Task<ActionResult<Scan?>> GetScan(int id)
+    {
+        return await _context.Scans.FindAsync(id);
+    }
+
     
     [HttpPost]
     [Authorize(Policy = Policies.RequirePicker)]
