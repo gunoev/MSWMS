@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Factories;
 using MSWMS.Models.Requests;
@@ -7,21 +8,24 @@ namespace MSWMS.Services;
 
 public class ScanService : IScanService
 {
-    private readonly BoxService _boxService =  new BoxService();
-    private readonly OrderService _orderService =  new OrderService();
-    private readonly UserService _userService =  new UserService();
+    private readonly BoxService _boxService;
+    private readonly OrderService _orderService;
+    private readonly UserService _userService;
     private readonly AppDbContext _context;
     
-    public ScanService(AppDbContext context)
+    public ScanService(OrderService orderService, BoxService boxService, UserService userService, AppDbContext context)
     {
         _context = context;
+        _orderService = orderService;
+        _boxService = boxService;
+        _userService = userService;
     }
     public async Task<Scan.ScanStatus> ProcessScan(ScanRequest request)
     {
-        var item = GetItemByBarcodeAndOrder(request.Barcode, request.OrderId).Result;
-        var order = _orderService.GetByIdAsync(request.OrderId).Result;
-        var box = _boxService.GetBoxByNumberAndOrder(request.BoxNumber, request.OrderId).Result;
-        var user = _userService.GetUserByIdAsync(request.UserId).Result;
+        var item = await GetItemByBarcodeAndOrder(request.Barcode, request.OrderId);
+        var order = await _orderService.GetByIdAsync(request.OrderId);
+        var box = await _boxService.GetBoxByNumberAndOrder(request.BoxNumber, request.OrderId);
+        var user = await _userService.GetUserByIdAsync(request.UserId);
 
         if (order is null)
         {
@@ -32,52 +36,54 @@ public class ScanService : IScanService
             box = BoxFactory.Create(request.BoxNumber, order, user);
         }
 
+        Scan scan;
+
         if (item == null)
         {
-            var scan = ScanFactory.CreateNotFound(request.Barcode, item, box, order, user);
-            AddScanToOrder(scan, order);
+            scan = ScanFactory.CreateNotFound(request.Barcode, item, box, order, user);
+            await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
             return Scan.ScanStatus.NotFound;
         }
-        else if (item != null && (GetScannedQuantity(item, order).Result < item.NeededQuantity))
+        if (GetScannedQuantity(item, order).Result < item.NeededQuantity)
         {
-            var scan =ScanFactory.CreateOk(request.Barcode, item, box, order, user);
-            AddScanToOrder(scan, order);
+            scan = ScanFactory.CreateOk(request.Barcode, item, box, order, user);
+            await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
             return Scan.ScanStatus.Ok;
         }
-        else if (item != null &&  (GetScannedQuantity(item, order).Result >= item.NeededQuantity))
+        if (item != null &&  (GetScannedQuantity(item, order).Result >= item.NeededQuantity))
         {
-            var scan = ScanFactory.CreateExcess(request.Barcode, item, box, order, user);
-            AddScanToOrder(scan, order);
+            scan = ScanFactory.CreateExcess(request.Barcode, item, box, order, user);
+            await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
             return Scan.ScanStatus.Excess;
         }
-        else
-        {
-            var scan = ScanFactory.CreateError(request.Barcode, item??null, box, order, user);
-            AddScanToOrder(scan, order);
-            await _context.SaveChangesAsync();
-            return Scan.ScanStatus.Error;
-        }
+        
+        scan = ScanFactory.CreateError(request.Barcode, item, box, order, user);
+        await AddScanToOrder(scan, order);
+        await _context.SaveChangesAsync();
+        return Scan.ScanStatus.Error;
+        
     }
 
     public async Task<int> GetScannedQuantity(Item item, Order order)
     {
-        return _context.Scans.Count(s => s.Item.Id == item.Id && s.Order.Id == order.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess));
+        return await _context.Scans.CountAsync(s => s.Item.Id == item.Id && s.Order.Id == order.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess));
     }
 
     public async Task<Item?> GetItemByBarcodeAndOrder(string barcode, int orderId)
     {
-        Item? item = _context.Orders
+        Item? item = await _context.Orders
             .Where(o => o.Id == orderId)
             .SelectMany(o => o.Items)
-            .FirstOrDefault(i => i.ItemInfo.Any(iif => iif.Barcode == barcode));
+            .FirstOrDefaultAsync(i => i.ItemInfo.Any(iif => iif.Barcode == barcode));
 
         return item;
     }
     
-    public async void AddScanToOrder(Scan scan, Order order)
+    
+    public async Task AddScanToOrder(Scan scan, Order order)
     {
         try
         {
@@ -85,7 +91,13 @@ public class ScanService : IScanService
             {
                 order.Scans = new List<Scan>();
             }
-            order?.Scans.Add(scan);
+            
+            /*_context.Scans.Add(scan);*/
+        
+            order.Scans.Add(scan);
+        
+            _context.Entry(order).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
         }
         catch (Exception e)
         {
