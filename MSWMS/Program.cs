@@ -126,7 +126,10 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<BoxService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<IScanService, ScanService>();
+
 // Swagger конфигурация
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
