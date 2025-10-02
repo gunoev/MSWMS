@@ -35,6 +35,8 @@ namespace MSWMS.Controllers
                 .Include(o => o.Destination)
                 .Include(o => o.CreatedBy)
                 .Include(o => o.Items)
+                .Include(o => o.Scans)
+                .Include(o => o.Boxes)
                 .AsNoTracking()
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

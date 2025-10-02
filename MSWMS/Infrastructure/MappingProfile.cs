@@ -18,7 +18,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.CreatedBy, opt => opt.MapFrom(src => src.CreatedBy != null ? src.CreatedBy.Name : "Unknown"))
             .ForMember(dest => dest.TotalBoxes, opt => opt.MapFrom(src => src.Boxes != null ? src.Boxes.Count : 0))
             .ForMember(dest => dest.TotalQuantity, opt => opt.MapFrom(src => src.Items.Sum(i => i.NeededQuantity)))
-            .ForMember(dest => dest.TotalScanned, opt => opt.MapFrom(src => src.Scans != null ? src.Scans.Count : 0));
+            .ForMember(dest => dest.TotalScanned, opt => opt.MapFrom(src => src.Scans != null ? src.Scans.Count(s => s.Status == Scan.ScanStatus.Ok) : 0));
         
     }
 }
