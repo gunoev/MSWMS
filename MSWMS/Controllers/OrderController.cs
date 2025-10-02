@@ -63,8 +63,8 @@ namespace MSWMS.Controllers
             return await _context.Orders
                 .AsSplitQuery()
                 .Include(o => o.Items)
-                .ThenInclude(i => i.ItemInfo)
-                .AsNoTracking()
+                .ThenInclude(i => i.ItemInfo.Take(1))
+                .AsNoTracking() 
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
 
