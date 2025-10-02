@@ -6,10 +6,14 @@ namespace MSWMS.Services;
 public class OrderService
 {
     private IOrderRepository _orderRepository;
+    
+    public OrderService(IOrderRepository orderRepository)
+    {
+        _orderRepository = orderRepository;
+    }
+    
     public async Task<Order?> GetByIdAsync(int id)
     {
-        _orderRepository = new OrderRepository(new AppDbContext());
-        
-        return _orderRepository.GetByIdAsync(id).Result;
+        return await _orderRepository.GetByIdAsync(id);
     }
 }
