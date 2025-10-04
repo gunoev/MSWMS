@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MSWMS.Entities;
 using MSWMS.Models.Auth;
 using MSWMS.Services;
 using MSWMS.Services.Interfaces;
@@ -14,10 +16,12 @@ namespace MSWMS.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly AppDbContext _context;
     
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, AppDbContext context)
     {
         _authService = authService;
+        _context = context;
     }
     
     // В методе Login в AuthController
@@ -92,11 +96,14 @@ public class AuthController : ControllerBase
     
     [HttpGet("me")]
     [Authorize]
-    public IActionResult GetCurrentUser()
+    public async Task<IActionResult> GetCurrentUser()
     {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
         return Ok(new 
         {
             Username = User.Identity?.Name,
+            Email = user?.Email,
+            Name = user?.Name,
             Roles = User.Claims
                 .Where(c => c.Type == ClaimTypes.Role)
                 .Select(c => c.Value)
@@ -105,10 +112,11 @@ public class AuthController : ControllerBase
     
     [HttpPost("logout")]
     [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        return Ok(new { Message = "Выход выполнен успешно" });
+        return Ok(new { Message = "Successfully logged out" });
     }
     
     private async Task SignInWithCookies(Entities.User user)
