@@ -9,6 +9,7 @@ public class User
     public required string PasswordHash { get; set; }
     public required UserStatus Status { get; set; } = UserStatus.Unknown;
     public required Location Location { get; set; }
+    //public string Avatar { get; set; } // path to image
     public required ICollection<Role> Roles { get; set; }
     
     public enum UserStatus
