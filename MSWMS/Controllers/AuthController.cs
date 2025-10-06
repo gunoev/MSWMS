@@ -137,7 +137,7 @@ public class AuthController : ControllerBase
         var authProperties = new AuthenticationProperties
         {
             IsPersistent = true,
-            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(1)
         };
         
         await HttpContext.SignInAsync(
