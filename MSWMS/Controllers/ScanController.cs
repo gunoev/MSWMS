@@ -29,6 +29,33 @@ public class ScanController : ControllerBase
         return await _context.Scans.FindAsync(id);
     }
 
+    [HttpGet("order/{id}")]
+    [Authorize(Policy = Policies.RequirePicker)]
+    public async Task<ActionResult<IEnumerable<ScanResponse>>> GetScansByOrderId(int id)
+    {
+        var scans = await _context.Scans.AsNoTracking().Include(s => s.Box).Include(s => s.User).Where(s => s.Order.Id == id).ToListAsync();
+        
+        var scansDto = new List<ScanResponse>();
+
+        foreach (var scan in scans)
+        {
+            var scanDto = new ScanResponse
+            {
+                Id = scan.Id,
+                Barcode = scan.Barcode,
+                TimeStamp = scan.TimeStamp,
+                Status = scan.Status,
+                BoxNumber = scan.Box.BoxNumber,
+                UserId = scan.User.Id,
+                Username = scan.User.Username,
+            };
+            
+            scansDto.Add(scanDto);
+        }
+
+        return scansDto;
+    }
+
     
     [HttpPost]
     [Authorize(Policy = Policies.RequirePicker)]
