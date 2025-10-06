@@ -16,11 +16,32 @@ namespace MSWMS.Controllers
             _context = context;
         }
 
-        // GET: api/ItemInfo
+        /*// GET: api/ItemInfo
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ItemInfo>>> GetItemInfos()
         {
             return await _context.ItemInfos.ToListAsync();
+        }*/
+
+        [HttpGet("barcode/{barcode}")]
+        public async Task<ActionResult<ItemInfo>> GetByBarcode(string barcode)
+        {
+            var itemInfo = await _context.ItemInfos.FirstOrDefaultAsync(inf => inf.Barcode == barcode);
+        
+            if (itemInfo == null)
+            {
+                return NotFound();
+            }
+        
+            return itemInfo;
+        }
+        
+        [HttpGet("item-number/{itemNumber}")]
+        public async Task<ActionResult<List<ItemInfo>>> GetByItemNumber(string itemNumber)
+        {
+            var itemInfos = await _context.ItemInfos.Where(inf => inf.ItemNumber == itemNumber).ToListAsync();
+        
+            return itemInfos;
         }
 
         // GET: api/ItemInfo/5
