@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Hubs;
 using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
@@ -15,11 +16,13 @@ public class ScanController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IScanService _scanService;
+    private readonly ScanHub _scanHub;
 
-    public ScanController(AppDbContext context, IScanService scanService)
+    public ScanController(AppDbContext context, IScanService scanService, ScanHub scanHub)
     {
         _context = context;
         _scanService = scanService;
+        _scanHub = scanHub;
     }
 
     [HttpGet("{id}")]
@@ -61,16 +64,16 @@ public class ScanController : ControllerBase
     [Authorize(Policy = Policies.RequirePicker)]
     public async Task<ActionResult<ScanResponse>> PostScan(ScanRequest scanRequest)
     {
-        var status = await _scanService.ProcessScan(scanRequest);
+        var userName = User.Identity?.Name;
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == userName);
         
-        var response = new ScanResponse
-        {
-            Barcode = scanRequest.Barcode, 
-            TimeStamp = DateTime.Now,
-            Status = status,
-            BoxNumber = scanRequest.BoxNumber,
-            Username = _context.Users.AsNoTracking().First(u => u.Id == scanRequest.UserId).Username,
-        };
+        if (user is null) return BadRequest();
+        
+        scanRequest.UserId = user.Id;
+        
+        var response = await _scanService.ProcessScan(scanRequest);
+
+        await _scanHub.ScanProcessed(scanRequest.OrderId, response.Id, response.BoxNumber);
 
         return response;
     }
