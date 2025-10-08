@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MSWMS.Entities;
+using MSWMS.Hubs;
 using MSWMS.Infrastructure;
 using MSWMS.Repositories;
 using MSWMS.Services;
@@ -129,6 +130,7 @@ builder.Services.AddScoped<BoxService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<IScanService, ScanService>();
+builder.Services.AddScoped<ScanHub>();
 
 // Swagger конфигурация
 builder.Services.AddEndpointsApiExplorer();
@@ -138,6 +140,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Добавление пакета BCrypt для хеширования паролей
 builder.Services.AddSingleton<BCrypt.Net.BCrypt>();
+builder.Services.AddSignalR();
 
 // Добавьте CORS
 builder.Services.AddCors(options =>
@@ -184,7 +187,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.MapHub<ScanHub>("/scanhub");
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
