@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 
 namespace MSWMS.Models.Requests;
@@ -17,31 +18,41 @@ public class CreateOrderRequest
 
     public async Task<Order> ToEntity(AppDbContext context)
     {
-        var origin = context.Locations.Find(OriginId);
-        var destination = context.Locations.Find(DestinationId);
-        var user = context.Users.Find(UserId);
-        
-        if (origin is null)
-        {
-            throw new Exception("Origin location not found");
-        }
-        if (destination is null)
-        {
-            throw new Exception("Destination location not found");
-        }
+        var origin = await context.Locations.FindAsync(OriginId);
+        var destination = await context.Locations.FindAsync(DestinationId);
+        var user = await context.Users.FindAsync(UserId);
 
-        if (user is null)
-        {
-            throw new Exception("User not found");
-        }
+        if (origin is null) throw new Exception("Origin location not found");
+        if (destination is null) throw new Exception("Destination location not found");
+        if (user is null) throw new Exception("User not found");
+
+        var neededPairs = Items
+            .Select(i => new { i.ItemNumber, i.Variant })
+            .ToList();
+
+        var itemNumbers = neededPairs.Select(p => p.ItemNumber).Distinct().ToList();
+        var variants = neededPairs.Select(p => p.Variant).Distinct().ToList();
+
+        var allInfos = await context.ItemInfos
+            .Where(inf => itemNumbers.Contains(inf.ItemNumber)
+                          && (inf.Variant == null || variants.Contains(inf.Variant))).ToListAsync();
         
-        var items = new List<Item>();
+        // Если не найдено нужно добавить новую строку (с пометкой что это добавлено вручную)?
         
-        foreach (var item in Items)
+        var items = Items.Select(req =>
         {
-            items.Add(await item.ToEntity(context));
-        }
-        var order = new Order
+            var info = allInfos
+                .Where(inf => inf.ItemNumber == req.ItemNumber && inf.Variant == req.Variant)
+                .ToList();
+
+            return new Item
+            {
+                NeededQuantity = req.NeededQuantity,
+                ItemInfo = info
+            };
+        }).ToList();
+
+        return new Order
         {
             ShipmentId = ShipmentId,
             TransferOrderNumber = TransferOrderNumber,
@@ -56,8 +67,5 @@ public class CreateOrderRequest
             CreatedBy = user,
             Type = Type,
         };
-
-        return order;
     }
-    
 }
