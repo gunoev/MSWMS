@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Factories;
 using MSWMS.Models.Requests;
+using MSWMS.Models.Responses;
 using MSWMS.Services.Interfaces;
 
 namespace MSWMS.Services;
@@ -20,7 +21,7 @@ public class ScanService : IScanService
         _boxService = boxService;
         _userService = userService;
     }
-    public async Task<Scan.ScanStatus> ProcessScan(ScanRequest request)
+    public async Task<ScanResponse> ProcessScan(ScanRequest request)
     {
         var item = await GetItemByBarcodeAndOrder(request.Barcode, request.OrderId);
         var order = await _orderService.GetByIdAsync(request.OrderId);
@@ -29,7 +30,18 @@ public class ScanService : IScanService
 
         if (order is null)
         {
-            return Scan.ScanStatus.Error;
+            return new ScanResponse
+            {
+                Id = 0,
+                Barcode = request.Barcode, 
+                TimeStamp = DateTime.Now,
+                Status = Scan.ScanStatus.Error,
+                BoxNumber = request.BoxNumber,
+                BoxId = 0,
+                ItemId = 0,
+                OrderId = 0,
+                Username = user.Username,
+            };
         }
         if (box is null || box.User.Username != user?.Username) // create new box increment box number
         {
@@ -43,27 +55,68 @@ public class ScanService : IScanService
             scan = ScanFactory.CreateNotFound(request.Barcode, item, box, order, user);
             await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
-            return Scan.ScanStatus.NotFound;
+            return new ScanResponse
+            {
+                Barcode = scan.Barcode, 
+                TimeStamp = DateTime.Now,
+                Status = Scan.ScanStatus.NotFound,
+                BoxId = box.Id,
+                ItemId = 0,
+                OrderId = order.Id,
+                BoxNumber = box.BoxNumber,
+                Username = user.Username,
+            };
         }
         if (GetScannedQuantity(item, order).Result < item.NeededQuantity)
         {
             scan = ScanFactory.CreateOk(request.Barcode, item, box, order, user);
             await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
-            return Scan.ScanStatus.Ok;
+            return new ScanResponse
+            {
+                Barcode = scan.Barcode, 
+                TimeStamp = DateTime.Now,
+                Status = Scan.ScanStatus.Ok,
+                BoxNumber = box.BoxNumber,
+                BoxId = box.Id,
+                ItemId = item.Id,
+                OrderId = order.Id,
+                Username = user.Username,
+            };
         }
         if (item != null &&  (GetScannedQuantity(item, order).Result >= item.NeededQuantity))
         {
             scan = ScanFactory.CreateExcess(request.Barcode, item, box, order, user);
             await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
-            return Scan.ScanStatus.Excess;
+            return new ScanResponse
+            {
+                Barcode = scan.Barcode, 
+                TimeStamp = DateTime.Now,
+                Status = Scan.ScanStatus.Excess,
+                BoxNumber = box.BoxNumber,
+                BoxId = box.Id,
+                ItemId = item.Id,
+                OrderId = order.Id,
+                Username = user.Username,
+            };
         }
         
         scan = ScanFactory.CreateError(request.Barcode, item, box, order, user);
         await AddScanToOrder(scan, order);
         await _context.SaveChangesAsync();
-        return Scan.ScanStatus.Error;
+        return new ScanResponse
+        {
+            Id = scan.Id,
+            Barcode = scan.Barcode,
+            TimeStamp = DateTime.Now,
+            Status = Scan.ScanStatus.Error,
+            BoxNumber = box.BoxNumber,
+            BoxId = box.Id,
+            ItemId = item.Id,
+            OrderId = order.Id,
+            Username = user.Username
+        };
         
     }
 
