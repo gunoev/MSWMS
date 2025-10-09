@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Hubs;
@@ -16,20 +17,38 @@ public class ScanController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IScanService _scanService;
-    private readonly ScanHub _scanHub;
+    private readonly IHubContext<ScanHub> _hubContext;
 
-    public ScanController(AppDbContext context, IScanService scanService, ScanHub scanHub)
+    public ScanController(AppDbContext context, IScanService scanService, IHubContext<ScanHub> hubContext)
     {
         _context = context;
         _scanService = scanService;
-        _scanHub = scanHub;
+        _hubContext = hubContext;
     }
 
     [HttpGet("{id}")]
     [Authorize(Policy = Policies.RequirePicker)]
-    public async Task<ActionResult<Scan?>> GetScan(int id)
+    public async Task<ActionResult<ScanResponse?>> GetScan(int id)
     {
-        return await _context.Scans.FindAsync(id);
+        var scan = await _context.Scans
+            .AsNoTracking()
+            .Include(s => s.Box)
+            .Include(s => s.User)
+            .Include(s => s.Item)
+            .FirstOrDefaultAsync(s => s.Id == id);
+        
+        return new ScanResponse
+        {
+            Id = scan.Id,
+            ItemId = scan.Item?.Id??0,
+            Barcode = scan.Barcode,
+            TimeStamp = scan.TimeStamp,
+            Status = scan.Status,
+            BoxNumber = scan.Box.BoxNumber,
+            BoxId = scan.Box.Id,
+            UserId = scan.User.Id,
+            Username = scan.User.Username,
+        };
     }
 
     [HttpGet("order/{id}")]
@@ -64,6 +83,12 @@ public class ScanController : ControllerBase
     [Authorize(Policy = Policies.RequirePicker)]
     public async Task<ActionResult<ScanResponse>> PostScan(ScanRequest scanRequest)
     {
+        Console.WriteLine(scanRequest.BoxNumber);
+        Console.WriteLine(scanRequest.OrderId);
+        Console.WriteLine(scanRequest.UserId);
+        Console.WriteLine(scanRequest.Barcode);
+        
+        var startTime = DateTime.Now;
         var userName = User.Identity?.Name;
         var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == userName);
         
@@ -72,9 +97,16 @@ public class ScanController : ControllerBase
         scanRequest.UserId = user.Id;
         
         var response = await _scanService.ProcessScan(scanRequest);
+        
+        Console.WriteLine($"Time before SignalR: {DateTime.Now - startTime}");
 
-        await _scanHub.ScanProcessed(scanRequest.OrderId, response.Id, response.BoxNumber);
+        var groupName = $"Order_{response.OrderId}";
+        await _hubContext.Clients.Group(groupName).SendAsync("scanProcessed", response.OrderId, response.Id, response.BoxNumber, response.BoxId, response.ItemId);
 
+        Console.WriteLine($"Time for scan: {DateTime.Now - startTime}");
+        
+        Console.WriteLine("Send To Group" + groupName);
+        Console.WriteLine("respone box id " + response.BoxId);
         return response;
     }
 }
