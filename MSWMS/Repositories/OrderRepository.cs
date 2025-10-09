@@ -29,7 +29,7 @@ public class OrderRepository : IOrderRepository
         return order;
     }
 
-    public async Task<Order?> GetByIdAsync(int id)
+    /*public async Task<Order?> GetByIdAsync(int id)
     {
         return await _context.Set<Order>()
             .Include(o => o.Items)
@@ -37,6 +37,11 @@ public class OrderRepository : IOrderRepository
             .Include(o => o.Scans)
             .Include(o => o.Users)
             .FirstOrDefaultAsync(o => o.Id == id);
+    }*/
+    
+    public async Task<Order?> GetByIdAsync(int id)
+    {
+        return await _context.Orders.FindAsync(id);
     }
 
     public async Task<IEnumerable<Order>> GetAllAsync()
