@@ -129,8 +129,8 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<BoxService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OrderService>();
-builder.Services.AddScoped<IScanService, ScanService>();
 builder.Services.AddScoped<ScanHub>();
+builder.Services.AddScoped<IScanService, ScanService>();
 
 // Swagger конфигурация
 builder.Services.AddEndpointsApiExplorer();
@@ -187,7 +187,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapHub<ScanHub>("/scanhub");
+app.MapHub<ScanHub>("/api/scanhub");
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
