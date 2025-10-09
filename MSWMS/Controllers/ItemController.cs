@@ -50,6 +50,7 @@ namespace MSWMS.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ItemDto>> GetItem(int id)
         {
+            var startTime = DateTime.Now;
             var item = await _context.Items
                 .AsNoTracking()
                 .Include(i => i.ItemInfo.Take(1))
@@ -73,7 +74,7 @@ namespace MSWMS.Controllers
             {
                 return NotFound();
             }
-
+            Console.WriteLine("GetItem endpoint time: " + (DateTime.Now - startTime));
             return item;
         }
 
