@@ -1,7 +1,9 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Authorization;
 using MSWMS.Infrastructure.Helpers;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
@@ -127,15 +129,19 @@ namespace MSWMS.Controllers
         }*/
         
         [HttpPost]
+        [Authorize(Policy = Policies.RequireManager)]
         public async Task<ActionResult<Order>> PostOrder(CreateOrderRequest orderRequest)
         {
             if (_context.Orders.Any(o => o.ShipmentId == orderRequest.ShipmentId))
             {
                 return BadRequest("Order with this shipment id already exists");
             }
+            
+            var user = _context.Users.FirstOrDefault(u => u.Username == User.Identity.Name);
+            orderRequest.UserId = user.Id;
 
             var order = orderRequest.ToEntity(_context).Result;
-           
+            
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
