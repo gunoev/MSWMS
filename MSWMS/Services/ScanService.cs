@@ -23,10 +23,16 @@ public class ScanService : IScanService
     }
     public async Task<ScanResponse> ProcessScan(ScanRequest request)
     {
+        var startTime = DateTime.Now;
         var item = await GetItemByBarcodeAndOrder(request.Barcode, request.OrderId);
+        Console.WriteLine($"Time to get item: {DateTime.Now - startTime}");
         var order = await _orderService.GetByIdAsync(request.OrderId);
+        Console.WriteLine($"Time to get order: {DateTime.Now - startTime}");
         var box = await _boxService.GetBoxByNumberAndOrder(request.BoxNumber, request.OrderId);
+        Console.WriteLine($"Time to get box: {DateTime.Now - startTime}");
         var user = await _userService.GetUserByIdAsync(request.UserId);
+        Console.WriteLine($"Time to get user: {DateTime.Now - startTime}");
+
 
         if (order is null)
         {
@@ -57,6 +63,7 @@ public class ScanService : IScanService
             await _context.SaveChangesAsync();
             return new ScanResponse
             {
+                Id = scan.Id,
                 Barcode = scan.Barcode, 
                 TimeStamp = DateTime.Now,
                 Status = Scan.ScanStatus.NotFound,
@@ -74,6 +81,7 @@ public class ScanService : IScanService
             await _context.SaveChangesAsync();
             return new ScanResponse
             {
+                Id = scan.Id,
                 Barcode = scan.Barcode, 
                 TimeStamp = DateTime.Now,
                 Status = Scan.ScanStatus.Ok,
@@ -91,6 +99,7 @@ public class ScanService : IScanService
             await _context.SaveChangesAsync();
             return new ScanResponse
             {
+                Id = scan.Id,
                 Barcode = scan.Barcode, 
                 TimeStamp = DateTime.Now,
                 Status = Scan.ScanStatus.Excess,
