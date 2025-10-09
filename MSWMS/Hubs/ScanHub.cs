@@ -7,6 +7,7 @@ public class ScanHub : Hub
     public async Task JoinOrderGroup(int orderId)
     {
         var groupName = $"Order_{orderId}";
+        Console.WriteLine($"Client {Context.ConnectionId} joined group {groupName}");
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
     }
 
