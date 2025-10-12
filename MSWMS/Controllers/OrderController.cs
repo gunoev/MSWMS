@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,35 +32,29 @@ namespace MSWMS.Controllers
             {
                 return BadRequest("Maximum order per page is 50");
             }
+
+            var query = _context.Orders.AsNoTracking();
             
-            var orders = await _context.Orders
-                .Include(o => o.Origin)
-                .Include(o => o.Destination)
-                .Include(o => o.CreatedBy)
-                .Include(o => o.Items)
-                .Include(o => o.Scans)
-                .Include(o => o.Boxes)
-                .AsNoTracking()
+            var totalItems = await query.CountAsync();
+            
+            var ordersDto = await query
+                .OrderBy(o => o.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .ProjectTo<OrderDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
-            
-            var ordersDto = new  List<OrderDto>();
 
-            foreach (var order in orders)
-            {
-                ordersDto.Add(_mapper.Map<OrderDto>(order));
-            }
             var ordersList = new OrderList
             {
                 Orders = ordersDto,
-                TotalItems = await _context.Orders.CountAsync(),
-                TotalPages = (int)Math.Ceiling(await _context.Orders.CountAsync() / (double)pageSize),
+                TotalItems = totalItems,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
                 PageSize = pageSize,
                 CurrentPage = page
             };
             return ordersList;
         }
+
 
         [HttpGet("details/{id}")]
         public async Task<ActionResult<Order?>> GetOrderDetails(int id)
