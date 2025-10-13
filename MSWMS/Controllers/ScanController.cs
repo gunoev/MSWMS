@@ -78,7 +78,36 @@ public class ScanController : ControllerBase
         return scansDto;
     }
 
-    
+    [HttpDelete]
+    [Authorize(Policy = Policies.RequirePicker)]
+    public async Task<IActionResult> DeleteScan(int id)
+    {
+        var scan = await _context.Scans.FindAsync(id);
+        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+        
+        if (user == null)
+        {
+            return BadRequest();
+        }
+        
+        if (scan == null)
+        {
+            return NotFound();
+        }
+
+        if (scan.User != user)
+        {
+            return BadRequest("You are not allowed to delete this scan");
+        }
+
+        _context.Scans.Remove(scan);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+
+    }
+
+
     [HttpPost]
     [Authorize(Policy = Policies.RequirePicker)]
     public async Task<ActionResult<ScanResponse>> PostScan(ScanRequest scanRequest)
