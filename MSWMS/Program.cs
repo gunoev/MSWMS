@@ -187,6 +187,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.MapFallbackToFile("index.html");
+
 app.MapHub<ScanHub>("/api/scanhub");
 
 app.UseHttpsRedirection();
