@@ -51,6 +51,93 @@ public class ScanController : ControllerBase
         };
     }
 
+    [HttpGet("count/{fromDate}/to/{toDate}")]
+    [Authorize(Policy = Policies.RequirePicker)]
+    public async Task<ActionResult<object>> CountByDateRange(string fromDate, string toDate)
+    {
+        var toDateTime = DateTime.Parse(toDate);
+        var fromDateTime = DateTime.Parse(fromDate);
+        
+        var user = User.Identity?.Name;
+        
+        var count = await _context.Scans
+            .AsNoTracking()
+            .Where(s => s.TimeStamp >= fromDateTime && s.TimeStamp <= toDateTime && s.User.Username == user)
+            .CountAsync();
+
+        return count;
+    }
+    
+    [HttpGet("statistic/{fromDate}/to/{toDate}")]
+    [Authorize(Policy = Policies.RequireManager)]
+    public async Task<ActionResult<object>> StatisticByDateRange(string fromDate, string toDate)
+    {
+        var toDateTime = DateTime.Parse(toDate);
+        var fromDateTime = DateTime.Parse(fromDate);
+
+        var days = (toDateTime - fromDateTime).Days + 1;
+        var dailyStats = new List<object>();
+
+        for (var i = 0; i < days; i++)
+        {
+            var currentDate = fromDateTime.AddDays(i);
+            var nextDate = currentDate.AddDays(1);
+
+            var stats = new
+            {
+                Date = currentDate.Date,
+                TotalScans = await _context.Scans
+                    .AsNoTracking()
+                    .Where(s => s.TimeStamp >= currentDate && s.TimeStamp < nextDate)
+                    .CountAsync(),
+
+                TotalBoxes = await _context.Scans
+                    .AsNoTracking()
+                    .Where(s => s.TimeStamp >= currentDate && s.TimeStamp < nextDate)
+                    .Select(s => s.Box.Id)
+                    .Distinct()
+                    .CountAsync(),
+
+                Users = new List<object>()
+            };
+
+            var users = await _context.Users
+                .AsNoTracking()
+                .ToListAsync();
+
+            foreach (var user in users)
+            {
+                var scans = await _context.Scans
+                    .AsNoTracking()
+                    .Where(s => s.TimeStamp >= currentDate && 
+                               s.TimeStamp < nextDate && 
+                               s.User.Username == user.Username)
+                    .CountAsync();
+
+                var boxes = await _context.Scans
+                    .AsNoTracking()
+                    .Where(s => s.TimeStamp >= currentDate && 
+                               s.TimeStamp < nextDate && 
+                               s.User.Username == user.Username)
+                    .Select(s => s.Box.Id)
+                    .Distinct()
+                    .CountAsync();
+
+                stats.Users.Add(new
+                {
+                    Username = user.Username,
+                    Name = user.Name,
+                    TotalScans = scans,
+                    TotalBoxes = boxes
+                });
+            }
+
+            dailyStats.Add(stats);
+        }
+
+        return dailyStats;
+    }
+
     [HttpGet("order/{id}")]
     [Authorize(Policy = Policies.RequirePicker)]
     public async Task<ActionResult<IEnumerable<ScanResponse>>> GetScansByOrderId(int id)
