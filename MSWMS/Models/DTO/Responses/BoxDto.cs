@@ -6,4 +6,6 @@ public class BoxDto
     public string Guid { get; set; }
     public int BoxNumber { get; set; }
     public int Quantity { get; set; }
+    public int UserId { get; set; }
+    public string Username { get; set; }
 }

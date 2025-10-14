@@ -33,6 +33,8 @@ namespace MSWMS.Controllers
                     Id = b.Id,
                     Guid = b.Guid.ToString(),
                     BoxNumber = b.BoxNumber,
+                    UserId = b.User.Id,
+                    Username = b.User.Username,
                     Quantity = _context.Scans.
                         Count(s => s.Box.Id == b.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))
                 })
@@ -51,6 +53,8 @@ namespace MSWMS.Controllers
                     Id = b.Id,
                     Guid = b.Guid.ToString(),
                     BoxNumber = b.BoxNumber,
+                    UserId = b.User.Id,
+                    Username = b.User.Username,
                     Quantity = _context.Scans
                         .Count(s => s.Box.Id == b.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))
                 })
