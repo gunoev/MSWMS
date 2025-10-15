@@ -123,6 +123,7 @@ namespace MSWMS.Controllers
         {
             var box = await _context.Boxes
                 .Include(b => b.User)
+                .Include(b => b.Order)
                 .FirstOrDefaultAsync(b => b.Id == id);
             
             var user = await _context.Users
@@ -139,7 +140,7 @@ namespace MSWMS.Controllers
                 return BadRequest();
             }
             
-            if (box.User != user || !user.Roles.Any(r => r.Type is Role.RoleType.Manager or Role.RoleType.Admin))
+            if (box.User != user && !user.Roles.Any(r => r.Type is Role.RoleType.Manager or Role.RoleType.Admin))
             {
                 return BadRequest("You are not allowed to delete this box");
             }
