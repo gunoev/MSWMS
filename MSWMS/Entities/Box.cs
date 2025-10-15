@@ -8,5 +8,6 @@ public class Box
     public string? UniqueId { get; set; }
     public required Order Order { get; set; }
     public required User User { get; set; }
-    
+    public List<Scan>? Scans { get; set; }
+
 }
