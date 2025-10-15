@@ -20,7 +20,7 @@ public class AppDbContext : DbContext
             OnConfiguring(optionsBuilder);
         }
 
-        Database.EnsureCreated();
+        //Database.EnsureCreated();
     }
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -44,12 +44,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
         modelBuilder.Entity<User>().HasOne(u => u.Location);
         
-        // BOX RELATIONSHIPS
-        modelBuilder.Entity<Box>()
-            .HasMany(b => b.Scans)
-            .WithOne()
-            .OnDelete(DeleteBehavior.Cascade);
-        
         // SCAN RELATIONSHIPS
         modelBuilder.Entity<Scan>()
             .HasOne(x => x.Order)
@@ -62,7 +56,8 @@ public class AppDbContext : DbContext
         
         modelBuilder.Entity<Scan>()
             .HasOne(x => x.Box)
-            .WithMany();
+            .WithMany(x => x.Scans)
+            .OnDelete(DeleteBehavior.Cascade);
         
         modelBuilder.Entity<Scan>()
             .HasOne(x => x.User)
