@@ -2,10 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Hubs;
+using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.Responses;
 
 namespace MSWMS.Controllers
@@ -15,10 +19,12 @@ namespace MSWMS.Controllers
     public class BoxController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IHubContext<ScanHub> _hubContext;
 
-        public BoxController(AppDbContext context)
+        public BoxController(AppDbContext context, IHubContext<ScanHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet("order/{orderId}")]
@@ -112,16 +118,38 @@ namespace MSWMS.Controllers
 
         // DELETE: api/Box/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.RequirePicker)]
         public async Task<IActionResult> DeleteBox(int id)
         {
-            var box = await _context.Boxes.FindAsync(id);
+            var box = await _context.Boxes
+                .Include(b => b.User)
+                .FirstOrDefaultAsync(b => b.Id == id);
+            
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            
             if (box == null)
             {
                 return NotFound();
             }
 
+            if (user == null)
+            {
+                return BadRequest();
+            }
+            
+            if (box.User != user || !user.Roles.Any(r => r.Type is Role.RoleType.Manager or Role.RoleType.Admin))
+            {
+                return BadRequest("You are not allowed to delete this box");
+            }
+
             _context.Boxes.Remove(box);
             await _context.SaveChangesAsync();
+            
+            var groupName = $"Order_{box.Order.Id}";
+            await _hubContext.Clients.Group(groupName).SendAsync("boxDeleted", box.Order.Id, box.Id, box.BoxNumber);
+
 
             return NoContent();
         }
