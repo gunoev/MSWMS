@@ -142,7 +142,12 @@ public class ScanController : ControllerBase
     [Authorize(Policy = Policies.RequirePicker)]
     public async Task<ActionResult<IEnumerable<ScanResponse>>> GetScansByOrderId(int id)
     {
-        var scans = await _context.Scans.AsNoTracking().Include(s => s.Box).Include(s => s.User).Where(s => s.Order.Id == id).ToListAsync();
+        var scans = await _context.Scans
+            .AsNoTracking()
+            .Include(s => s.Box)
+            .Include(s => s.User)
+            .Where(s => s.Order.Id == id)
+            .ToListAsync();
         
         var scansDto = new List<ScanResponse>();
 
@@ -170,7 +175,8 @@ public class ScanController : ControllerBase
     public async Task<IActionResult> DeleteScan(int id)
     {
         var scan = await _context.Scans.FindAsync(id);
-        var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
         
         if (user == null)
         {
@@ -182,13 +188,24 @@ public class ScanController : ControllerBase
             return NotFound();
         }
 
-        if (scan.User != user)
+        if (scan.User != user || !user.Roles.Any(r => r.Type is Role.RoleType.Manager or Role.RoleType.Admin))
         {
             return BadRequest("You are not allowed to delete this scan");
         }
 
         _context.Scans.Remove(scan);
+
+        if (scan.Box.Scans.Count == 0)
+        {
+            _context.Boxes.Remove(scan.Box);
+        }
+        
         await _context.SaveChangesAsync();
+        
+        var groupName = $"Order_{scan.Order.Id}";
+        await _hubContext.Clients.Group(groupName)
+            .SendAsync("scanDeleted", scan.Order.Id, scan.Id, scan.Box.Id, scan.Box.BoxNumber, scan.Item.Id);
+
 
         return NoContent();
 
