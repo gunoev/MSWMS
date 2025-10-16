@@ -19,6 +19,12 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.TotalBoxes, opt => opt.MapFrom(src => src.Boxes != null ? src.Boxes.Count : 0))
             .ForMember(dest => dest.TotalQuantity, opt => opt.MapFrom(src => src.Items.Sum(i => i.NeededQuantity)))
             .ForMember(dest => dest.TotalScanned, opt => opt.MapFrom(src => src.Scans != null ? src.Scans.Count(s => s.Status == Scan.ScanStatus.Ok) : 0));
-        
+
+        CreateMap<Location, LocationDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+            .ForMember(dest => dest.ShortName, opt => opt.MapFrom(src => src.ShortName))
+            .ForMember(dest => dest.Code, opt => opt.MapFrom(src => src.Code));
+
     }
 }
