@@ -27,10 +27,6 @@ public class LocationController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<LocationList>> GetLocations([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        if (pageSize > 50)
-        {
-            return BadRequest("Maximum locations per page is 50");
-        }
 
         var query = _context.Locations.AsNoTracking();
         
@@ -111,6 +107,13 @@ public class LocationController : ControllerBase
         return CreatedAtAction("GetLocation", new { id = location.Id }, location);
     }
     
+    // POST: api/Location/code-exist
+    [HttpGet("code-exists")]
+    public async Task<ActionResult<bool>> IsCodeExists(string code)
+    {
+        return await CodeExists(code);
+    }
+    
     // DELETE: api/Location/5
     [HttpDelete("{id}")]
     [Authorize(Policy = Policies.RequireManager)]
@@ -136,6 +139,11 @@ public class LocationController : ControllerBase
     private bool LocationExists(int id)
     {
         return _context.Locations.Any(e => e.Id == id);
+    }
+
+    async private Task<bool> CodeExists(string code)
+    {
+        return await _context.Locations.AnyAsync(l => l.Code.ToUpper() == code.ToUpper());
     }
     
 }
