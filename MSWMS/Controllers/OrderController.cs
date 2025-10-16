@@ -159,7 +159,30 @@ namespace MSWMS.Controllers
             return NoContent();
         }
         
+        // GET: api/Order/shipment-id-exist
+        [HttpGet("shipment-id-exists")]
+        public async Task<ActionResult<bool>> IsShipmentIdExists(string shipmentId)
+        {
+            return await ShipmentIdExist(shipmentId);
+        }
         
+        // GET: api/Order/shipment-id-exist
+        [HttpGet("order-number-exists")]
+        public async Task<ActionResult<bool>> IsTransferOrderExists(string transferOrderNumber)
+        {
+            return await TransferOrderExists(transferOrderNumber);
+        }
+
+
+        private Task<bool> ShipmentIdExist(string shipmentId)
+        {
+            return _context.Orders.AnyAsync(o => o.ShipmentId == shipmentId);
+        }
+
+        private Task<bool> TransferOrderExists(string transferOrderNumber)
+        {
+            return _context.Orders.AnyAsync(o => o.TransferOrderNumber == transferOrderNumber);
+        }
 
         private bool OrderExists(int id)
         {
