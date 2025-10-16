@@ -26,7 +26,9 @@ public class ScanService : IScanService
         var startTime = DateTime.Now;
         var item = await GetItemByBarcodeAndOrder(request.Barcode, request.OrderId);
         Console.WriteLine($"Time to get item: {DateTime.Now - startTime}");
-        var order = await _context.Orders.Include(o => o.Boxes).FirstOrDefaultAsync(o => o.Id == request.OrderId);//await _orderService.GetByIdAsync(request.OrderId);
+        var order = await _context.Orders
+            .Include(o => o.Boxes)
+            .FirstOrDefaultAsync(o => o.Id == request.OrderId);//await _orderService.GetByIdAsync(request.OrderId);
         Console.WriteLine($"Time to get order: {DateTime.Now - startTime}");
         var box = await _boxService.GetBoxByNumberAndOrder(request.BoxNumber, request.OrderId);
         Console.WriteLine($"Time to get box: {DateTime.Now - startTime}");
