@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MSWMS.Entities;
 
 
 namespace MSWMS.Models.Auth;
@@ -21,4 +22,6 @@ public class RegisterModel
     [Required(ErrorMessage = "Password confirmation required")]
     [Compare("Password", ErrorMessage = "Passwords do not match")]
     public required string ConfirmPassword { get; set; }
+    
+    public ICollection<Role>? Roles { get; set; }
 }
