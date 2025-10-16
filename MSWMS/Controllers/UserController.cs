@@ -20,7 +20,7 @@ namespace MSWMS.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IAuthService _authService;
-
+        
         public UserController(AppDbContext context, IAuthService authService)
         {
             _context = context;
@@ -29,6 +29,7 @@ namespace MSWMS.Controllers
 
         // GET: api/User
         [HttpGet]
+        [Authorize(Policy = Policies.RequireManager)]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
             return await _context.Users.ToListAsync();
@@ -36,6 +37,7 @@ namespace MSWMS.Controllers
 
         // GET: api/User/5
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.RequireManager)]
         public async Task<ActionResult<User>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
@@ -51,6 +53,7 @@ namespace MSWMS.Controllers
         // PUT: api/User/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.RequireManager)]
         public async Task<IActionResult> PutUser(int id, User user)
         {
             if (id != user.Id)
@@ -82,6 +85,7 @@ namespace MSWMS.Controllers
         // POST: api/User
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Policy = Policies.RequireManager)]
         public async Task<ActionResult<User>> PostUser(User user)
         {
             _context.Users.Add(user);
@@ -122,6 +126,7 @@ namespace MSWMS.Controllers
 
         // DELETE: api/User/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
