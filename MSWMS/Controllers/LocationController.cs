@@ -1,8 +1,11 @@
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Infrastructure.Authorization;
+using MSWMS.Models.Responses;
 
 namespace MSWMS.Controllers;
 
@@ -11,17 +14,44 @@ namespace MSWMS.Controllers;
 public class LocationController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IMapper _mapper;
 
-    public LocationController(AppDbContext context)
+
+    public LocationController(AppDbContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
     
     // GET: api/Location
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
+    public async Task<ActionResult<LocationList>> GetLocations([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
-        return await _context.Locations.ToListAsync();
+        if (pageSize > 50)
+        {
+            return BadRequest("Maximum locations per page is 50");
+        }
+
+        var query = _context.Locations.AsNoTracking();
+        
+        var totalItems = await query.CountAsync();
+
+        var locationsDto = await query
+            .OrderBy(o => o.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ProjectTo<LocationDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        var locationList = new LocationList
+        {
+            Locations = locationsDto,
+            TotalItems = totalItems,
+            TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+            PageSize = pageSize,
+            CurrentPage = page
+        };
+        return locationList;
     }
     
     [HttpGet("{id}")]
