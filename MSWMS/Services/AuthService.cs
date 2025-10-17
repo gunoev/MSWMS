@@ -89,11 +89,19 @@ public class AuthService : IAuthService
             };
         }
         
-        // Получение локации по умолчанию
-        var defaultLocation = await _dbContext.Locations.FirstOrDefaultAsync() 
-            ?? throw new InvalidOperationException("Default location not found.");
+        Location? defaultLocation;
+
+        if (model.LocationId == 0)
+        {
+            defaultLocation = await _dbContext.Locations.FirstOrDefaultAsync() 
+                                  ?? throw new InvalidOperationException("Default location not found.");   
+        }
+        else
+        {
+            defaultLocation = await _dbContext.Locations.FindAsync(model.LocationId)
+                              ?? throw new InvalidOperationException("Location not found.");
+        }
         
-        // Создание пользователя
         var user = new User
         {
             Username = model.Username,
@@ -104,14 +112,27 @@ public class AuthService : IAuthService
             Location = defaultLocation,
             Roles = new List<Role>()
         };
-        
-        // Добавление роли по умолчанию (Observer)
-        var defaultRole = await _dbContext.Roles
-            .FirstOrDefaultAsync(r => r.Type == Role.RoleType.Observer);
-        
-        if (defaultRole != null)
+
+        if (model.Roles != null && model.Roles.Any())
         {
-            user.Roles.Add(defaultRole);
+            var roles = await _dbContext.Roles
+                .Where(r => model.Roles.Contains(r.Type))
+                .ToListAsync();
+                
+            foreach(var role in roles)
+            {
+                user.Roles.Add(role);
+            }
+        }
+        else
+        {
+            var defaultRole = await _dbContext.Roles
+                .FirstOrDefaultAsync(r => r.Type == Role.RoleType.Observer);
+        
+            if (defaultRole != null)
+            {
+                user.Roles.Add(defaultRole);
+            }
         }
         
         _dbContext.Users.Add(user);
