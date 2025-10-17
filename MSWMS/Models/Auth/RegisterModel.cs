@@ -22,6 +22,7 @@ public class RegisterModel
     [Required(ErrorMessage = "Password confirmation required")]
     [Compare("Password", ErrorMessage = "Passwords do not match")]
     public required string ConfirmPassword { get; set; }
+    public int LocationId { get; set; }
     
-    public ICollection<Role>? Roles { get; set; }
+    public ICollection<Role.RoleType>? Roles { get; set; }
 }
