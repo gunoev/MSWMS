@@ -30,9 +30,24 @@ namespace MSWMS.Controllers
         // GET: api/User
         [HttpGet]
         [Authorize(Policy = Policies.RequireManager)]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<object>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            var users = await _context.Users
+                .Include(u => u.Roles)
+                .Include(u => u.Location)
+                .ToListAsync();
+            var userDtos = users.Select(user => new
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Username = user.Username,
+                Email = user.Email,
+                Roles = user.Roles.Select(r => (int)r.Type).ToList(),
+                Status = user.Status,
+                Location = user.Location.Code,
+            }).ToList();
+            
+            return userDtos;
         }
 
         // GET: api/User/5
@@ -85,7 +100,7 @@ namespace MSWMS.Controllers
         // POST: api/User
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize(Policy = Policies.RequireManager)]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<ActionResult<User>> PostUser(User user)
         {
             _context.Users.Add(user);
@@ -94,13 +109,18 @@ namespace MSWMS.Controllers
             return CreatedAtAction("GetUser", new { id = user.Id }, user);
         }
         
-        [HttpPost("add-user")] // NOT READY
+        [HttpPost("add-user")]
         [Authorize(Policy = Policies.RequireManager)]
         public async Task<IActionResult> AddNewUser([FromBody] RegisterModel model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+            
+            if (!User.IsInRole("Admin") && model.Roles.Contains(Role.RoleType.Admin))
+            {
+                return Forbid();
             }
         
             var result = await _authService.Register(model);
