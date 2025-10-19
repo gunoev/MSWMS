@@ -341,4 +341,8 @@
       <_ContentIncludedByDefault Remove="wwwroot\components\ui\tooltip\tooltip-trigger.svelte.d.ts" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Migrations\" />
+    </ItemGroup>
+
 </Project>
