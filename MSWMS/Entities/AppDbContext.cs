@@ -140,6 +140,14 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<ShipmentEvent>()
             .HasIndex(e => e.Code);
+        
+        // BOXES INDEXES
+        
+        modelBuilder.Entity<Box>()
+            .HasIndex(b => b.UniqueId);
+
+        modelBuilder.Entity<Box>()
+            .HasIndex(b => b.Guid);
 
     }
 
