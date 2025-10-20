@@ -22,6 +22,7 @@ public class Order
     public ICollection<Box>? Boxes { get; set; }
     public ICollection<Scan>? Scans { get; set; }
     public ICollection<User>? Users { get; set; }
+    public ICollection<Shipment>? Shipments { get; set; }
     
     
     public enum OrderStatus
