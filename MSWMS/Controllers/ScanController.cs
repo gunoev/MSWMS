@@ -211,7 +211,7 @@ public class ScanController : ControllerBase
 
     }
 
-    [HttpDelete("delete-many/{ids}")]
+    [HttpDelete("delete-many")]
     [Authorize(Policy = Policies.RequirePicker)]
     public async Task<IActionResult> DeleteScans(IEnumerable<int> ids)
     {
@@ -239,15 +239,23 @@ public class ScanController : ControllerBase
         foreach (var scan in scans)
         {
             _context.Scans.Remove(scan);
+            
+            await _context.SaveChangesAsync();
 
-            if (scan.Box.Scans.Count == 0)
+            var box = await _context.Boxes
+                .Include(b => b.Scans)
+                .FirstOrDefaultAsync(b => b.Id == scan.Box.Id);
+
+            if (box != null && box.Scans?.Count == 0)
             {
                 _context.Boxes.Remove(scan.Box);
+                
+                await _hubContext.Clients.Group($"Order_{scan.Order.Id}").SendAsync("boxDeleted", scan.Order.Id, box.Id, box.BoxNumber);
             }
 
             var groupName = $"Order_{scan.Order.Id}";
             await _hubContext.Clients.Group(groupName)
-                .SendAsync("scanDeleted", scan.Order.Id, scan.Id, scan.Box.Id, scan.Box.BoxNumber, scan.Item.Id);
+                .SendAsync("scanDeleted", scan.Order.Id, scan.Id, scan.Box.Id, scan.Box.BoxNumber, scan.Item?.Id);
         }
 
         await _context.SaveChangesAsync();
