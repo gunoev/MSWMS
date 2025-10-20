@@ -54,7 +54,7 @@ public class ScanService : IScanService
         }
         if (box is null || box.User.Username != user?.Username) // create new box increment box number
         {
-            box = BoxFactory.Create(order.Boxes.Count + 1, order, user);
+            box = BoxFactory.Create(order.Boxes.Max(b => b.BoxNumber) + 1, order, user);
         }
 
         Scan scan;
