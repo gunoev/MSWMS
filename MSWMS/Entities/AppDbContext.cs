@@ -115,6 +115,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Shipment>()
             .HasOne(s => s.CreatedBy)
             .WithMany();
+
+        modelBuilder.Entity<Shipment>()
+            .HasIndex(s => s.CreatedAt);
+        
+        modelBuilder.Entity<Shipment>()
+            .HasIndex(s => s.Scheduled);
         
         // SHIPMENT EVENT RELATIONSHIPS
         modelBuilder.Entity<ShipmentEvent>()
@@ -128,6 +134,12 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShipmentEvent>()
             .HasOne(s => s.User)
             .WithMany();
+        
+        modelBuilder.Entity<ShipmentEvent>()
+            .HasIndex(e => e.Timestamp);
+
+        modelBuilder.Entity<ShipmentEvent>()
+            .HasIndex(e => e.Code);
 
     }
 
