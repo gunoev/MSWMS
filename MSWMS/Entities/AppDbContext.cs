@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<Location> Locations { get; set; }
+    public DbSet<Shipment> Shipments { get; set; }
+    public DbSet<ShipmentEvent> ShipmentEvents { get; set; }
     
     public AppDbContext(DbContextOptionsBuilder? optionsBuilder = null)
     {
@@ -81,6 +83,10 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Order>()
             .HasMany(x => x.Users);
 
+        modelBuilder.Entity<Order>()
+            .HasMany(x => x.Shipments)
+            .WithOne(s => s.Order);
+
         // ITEM RELATIONSHIPS
         modelBuilder.Entity<Item>()
             .HasMany(x => x.ItemInfo)
@@ -100,6 +106,28 @@ public class AppDbContext : DbContext
         
         modelBuilder.Entity<Location>()
             .HasMany(o => o.DestinationOrders).WithOne();
+        
+        // SHIPMENTS RELATIONSHIPS
+        modelBuilder.Entity<Shipment>()
+            .HasMany(s => s.Events)
+            .WithOne();
+
+        modelBuilder.Entity<Shipment>()
+            .HasOne(s => s.CreatedBy)
+            .WithMany();
+        
+        // SHIPMENT EVENT RELATIONSHIPS
+        modelBuilder.Entity<ShipmentEvent>()
+            .HasOne(e => e.Location)
+            .WithMany();
+        
+        modelBuilder.Entity<ShipmentEvent>()
+            .HasOne(e => e.Box)
+            .WithMany();
+
+        modelBuilder.Entity<ShipmentEvent>()
+            .HasOne(s => s.User)
+            .WithMany();
 
     }
 
