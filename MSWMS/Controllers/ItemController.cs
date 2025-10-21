@@ -46,6 +46,36 @@ namespace MSWMS.Controllers
                 .ToListAsync();
         }
 
+        
+        [HttpGet("remaining/{barcode}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetRemaining(string barcode)
+        {
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.Items.Any(i => 
+                    i.ItemInfo.Any(info => info.Barcode == barcode) && 
+                    i.NeededQuantity > _context.Scans.Count(s => s.Item.Id == i.Id && 
+                                                                 (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))))
+                .Select(o => new
+                {
+                    Id = o.Id,
+                    ShipmentId = o.ShipmentId,
+                    TransferShipmentNumber = o.TransferShipmentNumber,
+                    TransferOrderNumber = o.TransferOrderNumber,
+                    CreatedAt = o.CreatedDateTime,
+                    CollectedQuantity = o.Items
+                        .Where(i => i.ItemInfo.Any(info => info.Barcode == barcode))
+                        .Sum(i => _context.Scans.Count(s => s.Item.Id == i.Id && 
+                                                           (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))),
+                    RemainingQuantity = o.Items
+                        .Where(i => i.ItemInfo.Any(info => info.Barcode == barcode))
+                        .Sum(i => i.NeededQuantity - _context.Scans.Count(s => s.Item.Id == i.Id && 
+                                                                             (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess)))
+                    
+                })
+                .ToListAsync();
+        }
+
         // GET: api/Item/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ItemDto>> GetItem(int id)
