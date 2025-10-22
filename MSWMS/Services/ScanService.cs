@@ -54,7 +54,7 @@ public class ScanService : IScanService
         }
         if (box is null || box.User.Username != user?.Username) // create new box increment box number
         {
-            box = BoxFactory.Create(order.Boxes.Max(b => b.BoxNumber) + 1, order, user);
+            box = BoxFactory.Create(order.Boxes?.Any() == true ? order.Boxes.Max(b => b.BoxNumber) + 1 : 1, order, user);
         }
 
         Scan scan;
@@ -158,11 +158,11 @@ public class ScanService : IScanService
             }
         
             order.Scans.Add(scan);
-
-            await UpdateOrderStatus(order);
         
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+            
+            await UpdateOrderStatus(order);
         }
         catch (Exception e)
         {
