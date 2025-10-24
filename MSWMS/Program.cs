@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -15,6 +16,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureHttpsDefaults(httpsOptions =>
+    {
+        httpsOptions.ServerCertificate = new X509Certificate2("C:/cert/aspnetapp.pfx");
+    });
+});
 
 // Регистрация AppDbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -149,9 +157,9 @@ builder.Services.AddCors(options =>
     {
         {
             builder
-                .WithOrigins("http://localhost:5173", "http://localhost:5262")
+                .WithOrigins("https://localhost:5173", "https://localhost:5262", "https://192.168.0.108:5262", "https://192.168.0.108:5173")
                 .AllowAnyMethod()
-                .AllowAnyHeader()
+                .AllowAnyHeader() 
                 .AllowCredentials();
         }
     });
@@ -200,5 +208,7 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+//app.Urls.Add("http://0.0.0.0:5262");
+app.Urls.Add("https://0.0.0.0:5262");
 
 app.Run();
