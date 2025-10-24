@@ -8,5 +8,6 @@ public class Shipment
     public required Location Destination { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime Scheduled { get; set; }
+    public bool IsCompleted { get; set; }
     public ICollection<ShipmentEvent>? Events { get; set; }
 }
