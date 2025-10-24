@@ -85,7 +85,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Order>()
             .HasMany(x => x.Shipments)
-            .WithOne(s => s.Order);
+            .WithMany(s => s.Orders);
 
         // ITEM RELATIONSHIPS
         modelBuilder.Entity<Item>()
@@ -111,6 +111,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Shipment>()
             .HasMany(s => s.Events)
             .WithOne();
+
+        modelBuilder.Entity<Shipment>()
+            .HasOne(s => s.Destination);
 
         modelBuilder.Entity<Shipment>()
             .HasOne(s => s.CreatedBy)
