@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Models.Requests;
 
 namespace MSWMS.Controllers
 {
@@ -75,12 +76,33 @@ namespace MSWMS.Controllers
         // POST: api/Shipment
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Shipment>> PostShipment(Shipment shipment)
+        public async Task<ActionResult<Shipment>> PostShipment(CreateShipmentRequest shipment)
         {
-            _context.Shipments.Add(shipment);
+            var location = await _context.Locations.FindAsync(shipment.LocationId);
+            if (location == null)
+            {
+                return NotFound("Location not found");
+            }
+            var orders = await _context.Orders.Where(o => shipment.OrderIds.Contains(o.Id)).ToListAsync();
+            if (!orders.Any())
+            {
+                return NotFound("Orders not found");
+            }
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+
+            var entity = new Shipment
+            {
+                CreatedBy = user,
+                Destination = location,
+                Orders = orders,
+                CreatedAt = DateTime.Now,
+                Scheduled = shipment.Scheduled
+            };
+            
+            _context.Shipments.Add(entity);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetShipment", new { id = shipment.Id }, shipment);
+            return CreatedAtAction("GetShipment", new { id = entity.Id }, entity);
         }
 
         // DELETE: api/Shipment/5
