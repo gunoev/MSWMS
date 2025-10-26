@@ -17,6 +17,7 @@ public class ShipmentEvent
     {
         Ok,
         NotFound,
+        Duplicate,
         Error,
     }
 
