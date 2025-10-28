@@ -9,6 +9,7 @@ public static class Policies
     public const string RequireManager = "RequireManager";
     public const string RequirePicker = "RequirePicker";
     public const string RequireDispatcher = "RequireDispatcher";
+    public const string LoadingOperator = "LoadingOperator";
     
     public static void AddPolicies(AuthorizationOptions options)
     {
@@ -23,5 +24,8 @@ public static class Policies
         
         options.AddPolicy(RequireDispatcher, policy =>
             policy.RequireRole(nameof(Role.RoleType.Dispatcher), nameof(Role.RoleType.Admin)));
+        
+        options.AddPolicy(LoadingOperator, policy =>
+            policy.RequireRole(nameof(Role.RoleType.LoadingOperator), nameof(Role.RoleType.Dispatcher), nameof(Role.RoleType.Admin)));
     }
 }
