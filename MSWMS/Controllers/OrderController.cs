@@ -54,6 +54,100 @@ namespace MSWMS.Controllers
             };
             return ordersList;
         }
+        
+        [HttpGet("filter")]
+        public async Task<ActionResult<OrderList>> GetOrdersWithFilters(
+            [FromQuery] int page = 1, 
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? shipmentId = null,
+            [FromQuery] string? transferOrderNumber = null, 
+            [FromQuery] string? transferShipmentNumber = null,
+            [FromQuery] string? origin = null,
+            [FromQuery] string? destination = null,
+            [FromQuery] Order.OrderStatus? status = null,
+            [FromQuery] Order.OrderType? type = null,
+            [FromQuery] Order.OrderPriority? priority = null,
+            [FromQuery] DateTime? createdFrom = null,
+            [FromQuery] DateTime? createdTo = null,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool descending = false)
+        {
+            if (pageSize > 50)
+            {
+                return BadRequest("Maximum order per page is 50");
+            }
+
+            var query = _context.Orders.AsNoTracking();
+
+            if (!string.IsNullOrEmpty(shipmentId))
+                query = query.Where(o => o.ShipmentId.Contains(shipmentId));
+
+            if (!string.IsNullOrEmpty(transferOrderNumber))
+                query = query.Where(o => o.TransferOrderNumber.Contains(transferOrderNumber));
+
+            if (!string.IsNullOrEmpty(transferShipmentNumber))
+                query = query.Where(o => o.TransferShipmentNumber.Contains(transferShipmentNumber));
+
+            if (!string.IsNullOrEmpty(origin))
+                query = query.Where(o => o.Origin.Name.Contains(origin));
+
+            if (!string.IsNullOrEmpty(destination))
+                query = query.Where(o => o.Destination.Name.Contains(destination));
+
+            if (status.HasValue)
+                query = query.Where(o => o.Status == status.Value);
+
+            if (type.HasValue)
+                query = query.Where(o => o.Type == type.Value);
+
+            if (priority.HasValue)
+                query = query.Where(o => o.Priority == priority.Value);
+
+            if (createdFrom.HasValue)
+                query = query.Where(o => o.CreatedDateTime >= createdFrom.Value);
+
+            if (createdTo.HasValue)
+                query = query.Where(o => o.CreatedDateTime <= createdTo.Value);
+
+            if (!string.IsNullOrEmpty(sortBy))
+            {
+                query = sortBy.ToLower() switch
+                {
+                    "shipmentid" => descending ? query.OrderByDescending(o => o.ShipmentId) : query.OrderBy(o => o.ShipmentId),
+                    "transferordernumber" => descending ? query.OrderByDescending(o => o.TransferOrderNumber) : query.OrderBy(o => o.TransferOrderNumber),
+                    "transfershipmentnumber" => descending ? query.OrderByDescending(o => o.TransferShipmentNumber) : query.OrderBy(o => o.TransferShipmentNumber),
+                    "createdat" => descending ? query.OrderByDescending(o => o.CreatedDateTime) : query.OrderBy(o => o.CreatedDateTime),
+                    "status" => descending ? query.OrderByDescending(o => o.Status) : query.OrderBy(o => o.Status),
+                    "type" => descending ? query.OrderByDescending(o => o.Type) : query.OrderBy(o => o.Type),
+                    "priority" => descending ? query.OrderByDescending(o => o.Priority) : query.OrderBy(o => o.Priority),
+                    _ => descending ? query.OrderByDescending(o => o.Id) : query.OrderBy(o => o.Id)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(o => o.Id);
+            }
+            
+            var totalItems = await query.CountAsync();
+            
+            var ordersDto = await query
+                .AsNoTracking()
+                .AsSplitQuery()
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ProjectTo<OrderDto>(_mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            var ordersList = new OrderList
+            {
+                Orders = ordersDto,
+                TotalItems = totalItems,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize),
+                PageSize = pageSize,
+                CurrentPage = page
+            };
+            return ordersList;
+        }
 
 
         [HttpGet("details/{id}")]
