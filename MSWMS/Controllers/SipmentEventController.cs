@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Authorization;
 
 namespace MSWMS.Controllers
 {
@@ -22,6 +24,7 @@ namespace MSWMS.Controllers
 
         // GET: api/SipmentEvent
         [HttpGet]
+        [Authorize(Policy = Policies.LoadingOperator)]
         public async Task<ActionResult<IEnumerable<ShipmentEvent>>> GetShipmentEvents()
         {
             return await _context.ShipmentEvents.ToListAsync();
@@ -29,6 +32,7 @@ namespace MSWMS.Controllers
 
         // GET: api/SipmentEvent/5
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.LoadingOperator)]
         public async Task<ActionResult<ShipmentEvent>> GetShipmentEvent(int id)
         {
             var shipmentEvent = await _context.ShipmentEvents.FindAsync(id);
@@ -44,6 +48,7 @@ namespace MSWMS.Controllers
         // PUT: api/SipmentEvent/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<IActionResult> PutShipmentEvent(int id, ShipmentEvent shipmentEvent)
         {
             if (id != shipmentEvent.Id)
@@ -75,6 +80,7 @@ namespace MSWMS.Controllers
         // POST: api/SipmentEvent
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Policy = Policies.LoadingOperator)]
         public async Task<ActionResult<ShipmentEvent>> PostShipmentEvent(ShipmentEvent shipmentEvent)
         {
             _context.ShipmentEvents.Add(shipmentEvent);
@@ -85,6 +91,7 @@ namespace MSWMS.Controllers
 
         // DELETE: api/SipmentEvent/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.LoadingOperator)]
         public async Task<IActionResult> DeleteShipmentEvent(int id)
         {
             var shipmentEvent = await _context.ShipmentEvents.FindAsync(id);
