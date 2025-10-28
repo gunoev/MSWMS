@@ -110,7 +110,8 @@ public class AppDbContext : DbContext
         // SHIPMENTS RELATIONSHIPS
         modelBuilder.Entity<Shipment>()
             .HasMany(s => s.Events)
-            .WithOne();
+            .WithOne()
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Shipment>()
             .HasOne(s => s.Destination);
