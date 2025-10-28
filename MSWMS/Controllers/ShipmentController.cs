@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
 
@@ -24,6 +26,7 @@ namespace MSWMS.Controllers
 
         // GET: api/Shipment
         [HttpGet]
+        [Authorize(Policy = Policies.LoadingOperator)]
         public async Task<ActionResult<IEnumerable<ShipmentDto>>> GetShipments([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             var query = _context.Shipments.AsQueryable();
@@ -62,6 +65,7 @@ namespace MSWMS.Controllers
 
         // GET: api/Shipment/5
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.LoadingOperator)]
         public async Task<ActionResult<Shipment>> GetShipment(int id)
         {
             var shipment = await _context.Shipments.FindAsync(id);
@@ -77,6 +81,7 @@ namespace MSWMS.Controllers
         // PUT: api/Shipment/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.RequireDispatcher)]
         public async Task<IActionResult> PutShipment(int id, Shipment shipment)
         {
             if (id != shipment.Id)
@@ -108,6 +113,7 @@ namespace MSWMS.Controllers
         // POST: api/Shipment
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Policy = Policies.RequireDispatcher)]
         public async Task<ActionResult<Shipment>> PostShipment(CreateShipmentRequest shipment)
         {
             var location = await _context.Locations.FindAsync(shipment.LocationId);
@@ -142,6 +148,7 @@ namespace MSWMS.Controllers
 
         // DELETE: api/Shipment/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.RequireDispatcher)]
         public async Task<IActionResult> DeleteShipment(int id)
         {
             var shipment = await _context.Shipments.FindAsync(id);
