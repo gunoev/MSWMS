@@ -13,18 +13,18 @@ namespace MSWMS.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SipmentEventController : ControllerBase
+    public class ShipmentEventController : ControllerBase
     {
         private readonly AppDbContext _context;
 
-        public SipmentEventController(AppDbContext context)
+        public ShipmentEventController(AppDbContext context)
         {
             _context = context;
         }
 
         // GET: api/SipmentEvent
         [HttpGet]
-        [Authorize(Policy = Policies.LoadingOperator)]
+        [Authorize(Policy = Policies.RequireLoadingOperator)]
         public async Task<ActionResult<IEnumerable<ShipmentEvent>>> GetShipmentEvents()
         {
             return await _context.ShipmentEvents.ToListAsync();
@@ -32,7 +32,7 @@ namespace MSWMS.Controllers
 
         // GET: api/SipmentEvent/5
         [HttpGet("{id}")]
-        [Authorize(Policy = Policies.LoadingOperator)]
+        [Authorize(Policy = Policies.RequireLoadingOperator)]
         public async Task<ActionResult<ShipmentEvent>> GetShipmentEvent(int id)
         {
             var shipmentEvent = await _context.ShipmentEvents.FindAsync(id);
@@ -80,7 +80,7 @@ namespace MSWMS.Controllers
         // POST: api/SipmentEvent
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize(Policy = Policies.LoadingOperator)]
+        [Authorize(Policy = Policies.RequireLoadingOperator)]
         public async Task<ActionResult<ShipmentEvent>> PostShipmentEvent(ShipmentEvent shipmentEvent)
         {
             _context.ShipmentEvents.Add(shipmentEvent);
@@ -91,7 +91,7 @@ namespace MSWMS.Controllers
 
         // DELETE: api/SipmentEvent/5
         [HttpDelete("{id}")]
-        [Authorize(Policy = Policies.LoadingOperator)]
+        [Authorize(Policy = Policies.RequireLoadingOperator)]
         public async Task<IActionResult> DeleteShipmentEvent(int id)
         {
             var shipmentEvent = await _context.ShipmentEvents.FindAsync(id);
