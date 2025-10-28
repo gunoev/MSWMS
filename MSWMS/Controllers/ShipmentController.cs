@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Models.Requests;
+using MSWMS.Models.Responses;
 
 namespace MSWMS.Controllers
 {
@@ -23,9 +24,40 @@ namespace MSWMS.Controllers
 
         // GET: api/Shipment
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Shipment>>> GetShipments()
+        public async Task<ActionResult<IEnumerable<ShipmentDto>>> GetShipments([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
-            return await _context.Shipments.ToListAsync();
+            var query = _context.Shipments.AsQueryable();
+            
+            if (from.HasValue)
+                query = query.Where(s => s.Scheduled >= from.Value);
+                
+            if (to.HasValue)
+                query = query.Where(s => s.Scheduled <= to.Value);
+
+            return await query.Select(s => new ShipmentDto
+            {
+                Id = s.Id,
+                Origin = s.Origin.Name,
+                Destination = s.Destination.Name,
+                CreatedAt = s.CreatedAt,
+                Scheduled = s.Scheduled,
+                TotalBoxes = s.Orders.Sum(o => o.Boxes.Count),
+                IsCompleted = false,
+                Orders = s.Orders.Select(o => new ShipmentOrderDto 
+                {
+                    Id = o.Id,
+                    ShipmentId = s.Id,
+                    TransferShipmentNumber = o.TransferShipmentNumber,
+                    TransferOrderNumber = o.TransferOrderNumber,
+                    Origin = o.Origin.Name,
+                    Destination = o.Destination.Name,
+                    Status = o.Status.ToString(),
+                    TotalQuantity = o.Items.Sum(i => i.NeededQuantity),
+                    TotalScanned = o.Scans.Count,
+                    TotalRemaining = o.Items.Sum(i => i.NeededQuantity) - o.Scans.Count,
+                    Boxes = o.Boxes.Count
+                }).ToList()
+            }).ToListAsync();
         }
 
         // GET: api/Shipment/5
@@ -88,11 +120,14 @@ namespace MSWMS.Controllers
             {
                 return NotFound("Orders not found");
             }
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+            var user = await _context.Users
+                .Include(u => u.Location)
+                .FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
 
             var entity = new Shipment
             {
                 CreatedBy = user,
+                Origin = user.Location,
                 Destination = location,
                 Orders = orders,
                 CreatedAt = DateTime.Now,
