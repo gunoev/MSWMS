@@ -267,6 +267,12 @@ namespace MSWMS.Controllers
             return await TransferOrderExists(transferOrderNumber);
         }
 
+        [HttpGet("shipment-number-exists")]
+        public async Task<ActionResult<bool>> IsTransferShipmentNumberExists(string transferShipmentNumber)
+        {
+            return await _context.Orders.AnyAsync(o => o.TransferShipmentNumber == transferShipmentNumber);
+        }
+
 
         private Task<bool> ShipmentIdExist(string shipmentId)
         {
