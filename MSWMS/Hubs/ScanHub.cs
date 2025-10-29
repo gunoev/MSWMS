@@ -17,6 +17,19 @@ public class ScanHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
     }
 
+    public async Task JoinShipmentGroup(int shipmentId)
+    {
+        var groupName = $"Shipment_{shipmentId}";
+        Console.WriteLine($"Client {Context.ConnectionId} joined group {groupName}");
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+    }
+
+    public async Task LeaveShipmentGroup(int shipmentId)
+    {
+        var groupName = $"Shipment_{shipmentId}";
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+    }
+
     public async Task NewMessage(long username, string message) =>
         await Clients.All.SendAsync("messageReceived", username, message);
 
