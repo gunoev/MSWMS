@@ -27,78 +27,78 @@ namespace MSWMS.Controllers
         // GET: api/Shipment
         
         [HttpGet]
-[Authorize(Policy = Policies.RequireLoadingOperator)]
-public async Task<ActionResult<IEnumerable<ShipmentDto>>> GetShipments([FromQuery] DateTime? from, [FromQuery] DateTime? to)
-{
-    var query = _context.Shipments
-        .Include(s => s.Origin)
-        .Include(s => s.Destination)
-        .Include(s => s.Orders)
-            .ThenInclude(o => o.Origin)
-        .Include(s => s.Orders)
-            .ThenInclude(o => o.Destination)
-        .AsQueryable();
-    
-    if (from.HasValue)
-        query = query.Where(s => s.Scheduled >= from.Value);
-        
-    if (to.HasValue)
-        query = query.Where(s => s.Scheduled <= to.Value);
-
-    var shipments = await query.ToListAsync();
-
-    // Загружаем связанные данные отдельными запросами для лучшей производительности
-    var shipmentIds = shipments.Select(s => s.Id).ToList();
-    var orderIds = shipments.SelectMany(s => s.Orders.Select(o => o.Id)).ToList();
-
-    // Загружаем количество коробок для каждого заказа
-    var boxCounts = await _context.Boxes
-        .Where(b => orderIds.Contains(b.Order.Id))
-        .GroupBy(b => b.Order.Id)
-        .Select(g => new { OrderId = g.Key, Count = g.Count() })
-        .ToListAsync();
-
-    // Загружаем общее количество товаров для каждого заказа
-    var itemQuantities = 10;
-
-    // Загружаем количество сканирований для каждого заказа
-    var scanCounts = await _context.Scans
-        .Where(s => orderIds.Contains(s.Order.Id))
-        .GroupBy(s => s.Order.Id)
-        .Select(g => new { OrderId = g.Key, Count = g.Count() })
-        .ToListAsync();
-
-    // Создаем словари для быстрого поиска
-    var boxCountDict = boxCounts.ToDictionary(x => x.OrderId, x => x.Count);
-    //var itemQuantityDict = itemQuantities.ToDictionary(x => x.OrderId, x => x.TotalQuantity);
-    var scanCountDict = scanCounts.ToDictionary(x => x.OrderId, x => x.Count);
-
-    return shipments.Select(s => new ShipmentDto
-    {
-        Id = s.Id,
-        Origin = s.Origin.Name,
-        Destination = s.Destination.Name, 
-        CreatedAt = s.CreatedAt,
-        Scheduled = s.Scheduled,
-        TotalBoxes = s.Orders.Sum(o => boxCountDict.GetValueOrDefault(o.Id, 0)),
-        IsCompleted = false,
-        Orders = s.Orders.Select(o => new ShipmentOrderDto
+        [Authorize(Policy = Policies.RequireLoadingOperator)]
+        public async Task<ActionResult<IEnumerable<ShipmentDto>>> GetShipments([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
-            Id = o.Id,
-            ShipmentId = s.Id,
-            DbCode = o.ShipmentId,
-            TransferShipmentNumber = o.TransferShipmentNumber,
-            TransferOrderNumber = o.TransferOrderNumber,
-            Origin = o.Origin.Name,
-            Destination = o.Destination.Name,
-            Status = o.Status.ToString(),
-            TotalQuantity = 10,
-            TotalScanned = scanCountDict.GetValueOrDefault(o.Id, 0),
-            TotalRemaining = 10 - scanCountDict.GetValueOrDefault(o.Id, 0),
-            Boxes = boxCountDict.GetValueOrDefault(o.Id, 0)
-        }).ToList()
-    }).ToList();
-}
+            var query = _context.Shipments
+                .Include(s => s.Origin)
+                .Include(s => s.Destination)
+                .Include(s => s.Orders)
+                    .ThenInclude(o => o.Origin)
+                .Include(s => s.Orders)
+                    .ThenInclude(o => o.Destination)
+                .AsQueryable();
+            
+            if (from.HasValue)
+                query = query.Where(s => s.Scheduled >= from.Value);
+                
+            if (to.HasValue)
+                query = query.Where(s => s.Scheduled <= to.Value);
+
+            var shipments = await query.ToListAsync();
+
+            // Загружаем связанные данные отдельными запросами для лучшей производительности
+            var shipmentIds = shipments.Select(s => s.Id).ToList();
+            var orderIds = shipments.SelectMany(s => s.Orders.Select(o => o.Id)).ToList();
+
+            // Загружаем количество коробок для каждого заказа
+            var boxCounts = await _context.Boxes
+                .Where(b => orderIds.Contains(b.Order.Id))
+                .GroupBy(b => b.Order.Id)
+                .Select(g => new { OrderId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            // Загружаем общее количество товаров для каждого заказа
+            var itemQuantities = 10;
+
+            // Загружаем количество сканирований для каждого заказа
+            var scanCounts = await _context.Scans
+                .Where(s => orderIds.Contains(s.Order.Id))
+                .GroupBy(s => s.Order.Id)
+                .Select(g => new { OrderId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            // Создаем словари для быстрого поиска
+            var boxCountDict = boxCounts.ToDictionary(x => x.OrderId, x => x.Count);
+            //var itemQuantityDict = itemQuantities.ToDictionary(x => x.OrderId, x => x.TotalQuantity);
+            var scanCountDict = scanCounts.ToDictionary(x => x.OrderId, x => x.Count);
+
+            return shipments.Select(s => new ShipmentDto
+            {
+                Id = s.Id,
+                Origin = s.Origin.Name,
+                Destination = s.Destination.Name, 
+                CreatedAt = s.CreatedAt,
+                Scheduled = s.Scheduled,
+                TotalBoxes = s.Orders.Sum(o => boxCountDict.GetValueOrDefault(o.Id, 0)),
+                IsCompleted = false,
+                Orders = s.Orders.Select(o => new ShipmentOrderDto
+                {
+                    Id = o.Id,
+                    ShipmentId = s.Id,
+                    DbCode = o.ShipmentId,
+                    TransferShipmentNumber = o.TransferShipmentNumber,
+                    TransferOrderNumber = o.TransferOrderNumber,
+                    Origin = o.Origin.Name,
+                    Destination = o.Destination.Name,
+                    Status = o.Status.ToString(),
+                    TotalQuantity = 10,
+                    TotalScanned = scanCountDict.GetValueOrDefault(o.Id, 0),
+                    TotalRemaining = 10 - scanCountDict.GetValueOrDefault(o.Id, 0),
+                    Boxes = boxCountDict.GetValueOrDefault(o.Id, 0)
+                }).ToList()
+            }).ToList();
+        }
 
         // GET: api/Shipment/5
         [HttpGet("{id}")]
@@ -180,7 +180,7 @@ public async Task<ActionResult<IEnumerable<ShipmentDto>>> GetShipments([FromQuer
             _context.Shipments.Add(entity);
             await _context.SaveChangesAsync();
 
-            return Ok("Shipment created");
+            return Ok();
         }
 
         // DELETE: api/Shipment/5
