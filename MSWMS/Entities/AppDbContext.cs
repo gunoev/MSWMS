@@ -130,6 +130,10 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ShipmentEvent>()
             .HasOne(e => e.Location)
             .WithMany();
+
+        modelBuilder.Entity<ShipmentEvent>()
+            .HasOne(e => e.Order)
+            .WithMany();
         
         modelBuilder.Entity<ShipmentEvent>()
             .HasOne(e => e.Box)
