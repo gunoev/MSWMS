@@ -11,6 +11,7 @@ using MSWMS.Entities;
 using MSWMS.Hubs;
 using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.Requests;
+using MSWMS.Models.Responses;
 
 namespace MSWMS.Controllers
 {
@@ -33,6 +34,47 @@ namespace MSWMS.Controllers
         public async Task<ActionResult<IEnumerable<ShipmentEvent>>> GetShipmentEvents()
         {
             return await _context.ShipmentEvents.ToListAsync();
+        }
+
+        [HttpGet("Shipment/{shipmentId}")]
+        [Authorize(Policy = Policies.RequireLoadingOperator)]
+        public async Task<ActionResult<IEnumerable<ShipmentEventDto>>> GetShipmentEventsByShipmentId(int shipmentId)
+        {
+            return await _context.ShipmentEvents
+                .Where(e => e.Shipment.Id == shipmentId)
+                .Select(e => new ShipmentEventDto
+                {
+                    Id = e.Id,
+                    ShipmentId = e.Shipment.Id,
+                    Timestamp = e.Timestamp,
+                    Code = e.Code,
+                    Location = e.Location.Name,
+                    Box = e.Box != null ? new BoxDto 
+                    { 
+                        Id = e.Box.Id,
+                        Guid = e.Box.Guid.ToString(),
+                        BoxNumber = e.Box.BoxNumber,
+                        UserId = e.Box.User.Id,
+                        Username = e.Box.User.Username,
+                        Quantity = _context.Scans
+                            .Count(s => s.Box.Id == e.Box.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))
+                    } : null,
+                    Order = e.Order != null ? new ShipmentOrderDto 
+                    { 
+                        Id = e.Order.Id,
+                        ShipmentId = e.Shipment.Id,
+                        DbCode = e.Order.ShipmentId,
+                        TransferShipmentNumber = e.Order.TransferShipmentNumber,
+                        TransferOrderNumber = e.Order.TransferOrderNumber,
+                        Origin = e.Order.Origin.Name,
+                        Destination = e.Order.Destination.Name,
+                        Status = e.Order.Status.ToString(),
+                    } : null,
+                    User = e.User.Username,
+                    Action = e.Action,
+                    Status = e.Status
+                })
+                .ToListAsync();
         }
 
         // GET: api/SipmentEvent/5
@@ -82,18 +124,18 @@ namespace MSWMS.Controllers
             return NoContent();
         }
 
-        [HttpPost]
+        [HttpPost("load")]
         [Authorize(Policy = Policies.RequireLoadingOperator)]
         public async Task<ActionResult<ShipmentEvent>> PostLoadEvent(ShipmentEventRequest eventRequest)
         {
             if (eventRequest.Action != ShipmentEvent.ShipmentAction.Load)
             {
-                BadRequest("Action must be Load");
+                return BadRequest("Action must be Load");
             }
 
             if (eventRequest.ShipmentId <= 0)
             {
-                BadRequest("ShipmentId must be set");
+                return BadRequest("ShipmentId must be set");
             }
             
             
@@ -105,17 +147,34 @@ namespace MSWMS.Controllers
             
             var location = user.Location;
 
-            var shipment = await _context.Shipments.FindAsync(eventRequest.ShipmentId);
+            var shipment = await _context.Shipments
+                .Include(s => s.Events)
+                .FirstOrDefaultAsync(s => s.Id == eventRequest.ShipmentId);
 
-            var box = await _context.Boxes.FirstOrDefaultAsync(b => b.Guid.ToString() == eventRequest.Code);
+            if (shipment is null)
+            {
+                return NotFound("Shipment not found");
+            }
+
+            var box = await _context.Boxes
+                .Include(b => b.Order)
+                .ThenInclude(o => o.Origin)
+                .Include(b => b.Order)
+                .ThenInclude(o => o.Destination)
+                .FirstOrDefaultAsync(b => b.Guid.ToString() == eventRequest.Code);
             
             var eventStatus = ShipmentEvent.EventStatus.Ok;
+            
+            if (shipment.Events is null)
+            {
+                shipment.Events = new List<ShipmentEvent>();
+            }
             
             if (box is null)
             {
                 eventStatus = ShipmentEvent.EventStatus.NotFound;
             }
-            else if (shipment.Events.Any(e => e.Code == eventRequest.Code))
+            else if (_context.ShipmentEvents.Any(e => e.Code == eventRequest.Code))
             {
                 eventStatus = ShipmentEvent.EventStatus.Duplicate;
             }
@@ -127,20 +186,51 @@ namespace MSWMS.Controllers
                 Location = location,
                 Box = box,
                 User = user,
+                Order = box?.Order?? null,
                 Action = ShipmentEvent.ShipmentAction.Load,
                 Status = eventStatus,
+                Shipment = shipment,
             };
             
             shipment.Events.Add(shipmentEvent);
             _context.Shipments.Entry(shipment).State = EntityState.Modified;
             await _context.SaveChangesAsync();
+
+            var eventDto = new ShipmentEventDto
+            {
+                Id = shipmentEvent.Id,
+                ShipmentId = shipmentEvent.Shipment.Id,
+                Timestamp = shipmentEvent.Timestamp,
+                Code = shipmentEvent.Code,
+                Location = shipmentEvent.Location.Name,
+                Box = shipmentEvent.Box != null ? new BoxDto 
+                { 
+                    Id = shipmentEvent.Box.Id,
+                    Guid = shipmentEvent.Box.Guid.ToString(),
+                    BoxNumber = shipmentEvent.Box.BoxNumber,
+                } : null,
+                Order = shipmentEvent.Order != null ? new ShipmentOrderDto 
+                { 
+                    Id = shipmentEvent.Order.Id,
+                    ShipmentId = shipmentEvent.Shipment.Id,
+                    DbCode = shipmentEvent.Order.ShipmentId,
+                    TransferShipmentNumber = shipmentEvent.Order.TransferShipmentNumber,
+                    TransferOrderNumber = shipmentEvent.Order.TransferOrderNumber,
+                    Origin = shipmentEvent.Order.Origin.Name,
+                    Destination = shipmentEvent.Order.Destination.Name,
+                    Status = shipmentEvent.Order.Status.ToString(),
+                } : null,
+                User = shipmentEvent.User.Username,
+                Action = shipmentEvent.Action,
+                Status = shipmentEvent.Status,
+            };
             
             
             var groupName = $"Shipment_{shipment.Id}";
             await _hubContext.Clients.Group(groupName)
-                .SendAsync("loadEventProcessed", shipmentEvent);
+                .SendAsync("loadEventProcessed", eventDto);
 
-            return CreatedAtAction("GetShipmentEvent", new { id = shipmentEvent.Id }, shipmentEvent);
+            return Ok();
         }
 
         // POST: api/SipmentEvent
