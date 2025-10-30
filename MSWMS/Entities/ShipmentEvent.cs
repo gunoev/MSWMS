@@ -8,10 +8,12 @@ public class ShipmentEvent
     [MaxLength(256)] public required string Code { get; set; }
     public DateTime Timestamp { get; set; }
     public required Location Location { get; set; }
-    public Box? Box { get; set; }
     public required User User { get; set; }
     public required ShipmentAction Action { get; set; }
     public required EventStatus Status { get; set; }
+    public Shipment? Shipment { get; set; }
+    public Box? Box { get; set; }
+    public Order? Order { get; set; }
 
     public enum EventStatus
     {
