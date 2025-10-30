@@ -34,6 +34,8 @@ namespace MSWMS.Controllers
                 .Include(s => s.Origin)
                 .Include(s => s.Destination)
                 .Include(s => s.Orders)
+                .ThenInclude(o => o.Items)
+                .Include(s => s.Orders)
                     .ThenInclude(o => o.Origin)
                 .Include(s => s.Orders)
                     .ThenInclude(o => o.Destination)
@@ -92,9 +94,9 @@ namespace MSWMS.Controllers
                     Origin = o.Origin.Name,
                     Destination = o.Destination.Name,
                     Status = o.Status.ToString(),
-                    TotalQuantity = 10,
+                    TotalQuantity = o.Items.Sum(i => i.NeededQuantity),
                     TotalScanned = scanCountDict.GetValueOrDefault(o.Id, 0),
-                    TotalRemaining = 10 - scanCountDict.GetValueOrDefault(o.Id, 0),
+                    TotalRemaining = o.Items.Sum(i => i.NeededQuantity) - scanCountDict.GetValueOrDefault(o.Id, 0), // temporary value
                     Boxes = boxCountDict.GetValueOrDefault(o.Id, 0)
                 }).ToList()
             }).ToList();
