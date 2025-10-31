@@ -103,6 +103,10 @@ public class ScanController : ControllerBase
 
             var users = await _context.Users
                 .AsNoTracking()
+                .Where
+                    (u => _context.Scans
+                        .Any(s => s.TimeStamp >= currentDate 
+                                  && s.TimeStamp < nextDate && s.User.Id == u.Id))
                 .ToListAsync();
 
             foreach (var user in users)
