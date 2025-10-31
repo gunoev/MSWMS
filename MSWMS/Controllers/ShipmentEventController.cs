@@ -74,6 +74,7 @@ namespace MSWMS.Controllers
                     Action = e.Action,
                     Status = e.Status
                 })
+                .OrderByDescending(s => s.Timestamp)
                 .ToListAsync();
         }
 
@@ -250,7 +251,10 @@ namespace MSWMS.Controllers
         [Authorize(Policy = Policies.RequireLoadingOperator)]
         public async Task<IActionResult> DeleteShipmentEvent(int id)
         {
-            var shipmentEvent = await _context.ShipmentEvents.FindAsync(id);
+            var shipmentEvent = await _context.ShipmentEvents
+                .Include(e => e.Shipment)
+                .FirstOrDefaultAsync(e => e.Id == id);
+            
             if (shipmentEvent == null)
             {
                 return NotFound();
@@ -258,6 +262,10 @@ namespace MSWMS.Controllers
 
             _context.ShipmentEvents.Remove(shipmentEvent);
             await _context.SaveChangesAsync();
+            
+            var groupName = $"Shipment_{shipmentEvent.Shipment?.Id}";
+            await _hubContext.Clients.Group(groupName)
+                .SendAsync("loadEventDeleted", id);
 
             return NoContent();
         }
