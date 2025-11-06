@@ -157,6 +157,7 @@ namespace MSWMS.Controllers
                 .AsSplitQuery()
                 .Include(o => o.Items)
                 .ThenInclude(i => i.ItemInfo.Take(1))
+                .Include(o => o.Destination)
                 .AsNoTracking() 
                 .FirstOrDefaultAsync(o => o.Id == id);
         }
