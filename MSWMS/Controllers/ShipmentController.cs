@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,10 +19,12 @@ namespace MSWMS.Controllers
     public class ShipmentController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ShipmentController(AppDbContext context)
+        public ShipmentController(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: api/Shipment
@@ -72,8 +75,13 @@ namespace MSWMS.Controllers
 
             // Создаем словари для быстрого поиска
             var boxCountDict = boxCounts.ToDictionary(x => x.OrderId, x => x.Count);
-            //var itemQuantityDict = itemQuantities.ToDictionary(x => x.OrderId, x => x.TotalQuantity);
-            var scanCountDict = scanCounts.ToDictionary(x => x.OrderId, x => x.Count);
+            var loadedBoxCounts = await _context.ShipmentEvents
+                .Where(e => orderIds.Contains(e.Order.Id) && e.Action == ShipmentEvent.ShipmentAction.Load)
+                .GroupBy(e => e.Order.Id)
+                .Select(g => new { OrderId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var loadedBoxCountDict = loadedBoxCounts.ToDictionary(x => x.OrderId, x => x.Count);
 
             return shipments.Select(s => new ShipmentDto
             {
@@ -84,20 +92,13 @@ namespace MSWMS.Controllers
                 Scheduled = s.Scheduled,
                 TotalBoxes = s.Orders.Sum(o => boxCountDict.GetValueOrDefault(o.Id, 0)),
                 IsCompleted = false,
-                Orders = s.Orders.Select(o => new ShipmentOrderDto
+                Orders = s.Orders.Select(o => 
                 {
-                    Id = o.Id,
-                    ShipmentId = s.Id,
-                    DbCode = o.ShipmentId,
-                    TransferShipmentNumber = o.TransferShipmentNumber,
-                    TransferOrderNumber = o.TransferOrderNumber,
-                    Origin = o.Origin.Name,
-                    Destination = o.Destination.Name,
-                    Status = o.Status.ToString(),
-                    TotalQuantity = o.Items.Sum(i => i.NeededQuantity),
-                    TotalScanned = scanCountDict.GetValueOrDefault(o.Id, 0),
-                    TotalRemaining = o.Items.Sum(i => i.NeededQuantity) - scanCountDict.GetValueOrDefault(o.Id, 0), // temporary value
-                    Boxes = boxCountDict.GetValueOrDefault(o.Id, 0)
+                    var dto = _mapper.Map<ShipmentOrderDto>(o);
+                    dto.LoadedBoxes = loadedBoxCountDict.GetValueOrDefault(o.Id, 0);
+                    dto.Boxes = boxCountDict.GetValueOrDefault(o.Id, 0);
+                    dto.TotalCollectedItems = scanCounts.FirstOrDefault(c => c.OrderId == o.Id)?.Count ?? 0;
+                    return dto;
                 }).ToList()
             }).ToList();
         }
