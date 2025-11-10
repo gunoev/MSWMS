@@ -142,39 +142,11 @@ public class ScanService : IScanService
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             
-            await UpdateOrderStatus(order);
+            await _orderService.UpdateOrderStatus(order);
         }
         catch (Exception e)
         {
             throw; // TODO handle exception
-        }
-    }
-
-    private async Task UpdateOrderStatus(Order order)
-    {
-        var currentStatus = order.Status;
-    
-        var totalNeededQuantity = order.Items.Sum(i => i.NeededQuantity);
-        var totalScannedQuantity = await _context.Scans.CountAsync(s => s.Order.Id == order.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess));
-    
-        if (totalScannedQuantity == 0 && currentStatus != Order.OrderStatus.New)
-        {
-            order.Status = Order.OrderStatus.New;
-        }
-        else if (totalScannedQuantity < totalNeededQuantity && currentStatus != Order.OrderStatus.InProgress)
-        {
-            order.Status = Order.OrderStatus.InProgress; 
-        }
-        else if (totalScannedQuantity >= totalNeededQuantity && currentStatus != Order.OrderStatus.Collected)
-        {
-            order.Status = Order.OrderStatus.Collected;
-            order.CollectedDateTime = DateTime.Now;
-        }
-    
-        if (currentStatus != order.Status)
-        {
-            order.LastChangeDateTime = DateTime.Now;
-            await _context.SaveChangesAsync();
         }
     }
 
@@ -184,6 +156,8 @@ public class ScanService : IScanService
         {
             order.Scans.Remove(scan);
             await _context.SaveChangesAsync();
+            
+            await _orderService.UpdateOrderStatus(order);
         }
         catch (Exception e)
         {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ using MSWMS.Entities;
 using MSWMS.Hubs;
 using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.Responses;
+using MSWMS.Services;
 
 namespace MSWMS.Controllers
 {
@@ -20,11 +22,13 @@ namespace MSWMS.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IHubContext<ScanHub> _hubContext;
+        private readonly OrderService _orderService;
 
-        public BoxController(AppDbContext context, IHubContext<ScanHub> hubContext)
+        public BoxController(AppDbContext context, IHubContext<ScanHub> hubContext, OrderService orderService)
         {
             _context = context;
             _hubContext = hubContext;
+            _orderService = orderService;
         }
 
         [HttpGet("order/{orderId}")]
@@ -150,6 +154,8 @@ namespace MSWMS.Controllers
             
             var groupName = $"Order_{box.Order.Id}";
             await _hubContext.Clients.Group(groupName).SendAsync("boxDeleted", box.Order.Id, box.Id, box.BoxNumber);
+            
+            await _orderService.UpdateOrderStatus(box.Order);
 
 
             return NoContent();

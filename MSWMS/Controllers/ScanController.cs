@@ -10,6 +10,7 @@ using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.DTO.Responses;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
+using MSWMS.Services;
 using MSWMS.Services.Interfaces;
 
 namespace MSWMS.Controllers;
@@ -20,15 +21,22 @@ public class ScanController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IScanService _scanService;
+    private readonly OrderService _orderService;
     private readonly IHubContext<ScanHub> _hubContext;
     private readonly IMapper _mapper;
 
-    public ScanController(AppDbContext context, IScanService scanService, IHubContext<ScanHub> hubContext, IMapper mapper)
+    public ScanController(
+        AppDbContext context, 
+        IScanService scanService, 
+        IHubContext<ScanHub> hubContext, 
+        IMapper mapper, 
+        OrderService orderService)
     {
         _context = context;
         _scanService = scanService;
         _hubContext = hubContext;
         _mapper = mapper;
+        _orderService = orderService;
     }
 
     [HttpGet("{id}")]
@@ -248,6 +256,8 @@ public class ScanController : ControllerBase
             var groupName = $"Order_{scan.Order.Id}";
             await _hubContext.Clients.Group(groupName)
                 .SendAsync("scanDeleted", scan.Order.Id, scan.Id, scan.Box.Id, scan.Box.BoxNumber, scan.Item?.Id);
+            
+            await _orderService.UpdateOrderStatus(scan.Order);
         }
 
         await _context.SaveChangesAsync();
