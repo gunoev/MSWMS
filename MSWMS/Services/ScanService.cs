@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Factories;
@@ -13,15 +14,17 @@ public class ScanService : IScanService
     private readonly OrderService _orderService;
     private readonly UserService _userService;
     private readonly AppDbContext _context;
+    private readonly IMapper _mapper;
     
-    public ScanService(OrderService orderService, BoxService boxService, UserService userService, AppDbContext context)
+    public ScanService(OrderService orderService, BoxService boxService, UserService userService, AppDbContext context, IMapper mapper)
     {
         _context = context;
         _orderService = orderService;
         _boxService = boxService;
         _userService = userService;
+        _mapper = mapper;
     }
-    public async Task<ScanResponse> ProcessScan(ScanRequest request)
+    public async Task<ScanResponse?> ProcessScan(ScanRequest request)
     {
         var startTime = DateTime.Now;
         var item = await GetItemByBarcodeAndOrder(request.Barcode, request.OrderId);
@@ -39,18 +42,7 @@ public class ScanService : IScanService
 
         if (order is null)
         {
-            return new ScanResponse
-            {
-                Id = 0,
-                Barcode = request.Barcode, 
-                TimeStamp = DateTime.Now,
-                Status = Scan.ScanStatus.Error,
-                BoxNumber = request.BoxNumber,
-                BoxId = 0,
-                ItemId = 0,
-                OrderId = 0,
-                Username = user.Username,
-            };
+            return null;
         }
         if (box is null || box.User.Username != user?.Username) // create new box increment box number
         {
@@ -64,17 +56,13 @@ public class ScanService : IScanService
             scan = ScanFactory.CreateNotFound(request.Barcode, item, box, order, user);
             await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
+            
             return new ScanResponse
             {
-                Id = scan.Id,
-                Barcode = scan.Barcode, 
-                TimeStamp = DateTime.Now,
-                Status = Scan.ScanStatus.NotFound,
-                BoxId = box.Id,
-                ItemId = 0,
-                OrderId = order.Id,
-                BoxNumber = box.BoxNumber,
-                Username = user.Username,
+                Scan = _mapper.Map<ScanDto>(scan),
+                Box = _mapper.Map<BoxDto>(box),
+                Item = null,
+                Username = user.Username
             };
         }
         if (GetScannedQuantity(item, order).Result < item.NeededQuantity)
@@ -82,17 +70,13 @@ public class ScanService : IScanService
             scan = ScanFactory.CreateOk(request.Barcode, item, box, order, user);
             await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
+            
             return new ScanResponse
             {
-                Id = scan.Id,
-                Barcode = scan.Barcode, 
-                TimeStamp = DateTime.Now,
-                Status = Scan.ScanStatus.Ok,
-                BoxNumber = box.BoxNumber,
-                BoxId = box.Id,
-                ItemId = item.Id,
-                OrderId = order.Id,
-                Username = user.Username,
+                Scan = _mapper.Map<ScanDto>(scan),
+                Box = _mapper.Map<BoxDto>(box),
+                Item = _mapper.Map<ItemDto>(item),
+                Username = user.Username
             };
         }
         if (item != null &&  (GetScannedQuantity(item, order).Result >= item.NeededQuantity))
@@ -100,33 +84,25 @@ public class ScanService : IScanService
             scan = ScanFactory.CreateExcess(request.Barcode, item, box, order, user);
             await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
+            
             return new ScanResponse
             {
-                Id = scan.Id,
-                Barcode = scan.Barcode, 
-                TimeStamp = DateTime.Now,
-                Status = Scan.ScanStatus.Excess,
-                BoxNumber = box.BoxNumber,
-                BoxId = box.Id,
-                ItemId = item.Id,
-                OrderId = order.Id,
-                Username = user.Username,
+                Scan = _mapper.Map<ScanDto>(scan),
+                Box = _mapper.Map<BoxDto>(box),
+                Item = _mapper.Map<ItemDto>(item),
+                Username = user.Username
             };
         }
         
         scan = ScanFactory.CreateError(request.Barcode, item, box, order, user);
         await AddScanToOrder(scan, order);
         await _context.SaveChangesAsync();
+        
         return new ScanResponse
         {
-            Id = scan.Id,
-            Barcode = scan.Barcode,
-            TimeStamp = DateTime.Now,
-            Status = Scan.ScanStatus.Error,
-            BoxNumber = box.BoxNumber,
-            BoxId = box.Id,
-            ItemId = item.Id,
-            OrderId = order.Id,
+            Scan = _mapper.Map<ScanDto>(scan),
+            Box = _mapper.Map<BoxDto>(box),
+            Item = _mapper.Map<ItemDto>(item),
             Username = user.Username
         };
         
