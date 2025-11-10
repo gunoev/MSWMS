@@ -1,3 +1,5 @@
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -18,17 +20,19 @@ public class ScanController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IScanService _scanService;
     private readonly IHubContext<ScanHub> _hubContext;
+    private readonly IMapper _mapper;
 
-    public ScanController(AppDbContext context, IScanService scanService, IHubContext<ScanHub> hubContext)
+    public ScanController(AppDbContext context, IScanService scanService, IHubContext<ScanHub> hubContext, IMapper mapper)
     {
         _context = context;
         _scanService = scanService;
         _hubContext = hubContext;
+        _mapper = mapper;
     }
 
     [HttpGet("{id}")]
     [Authorize(Policy = Policies.RequirePicker)]
-    public async Task<ActionResult<ScanResponse?>> GetScan(int id)
+    public async Task<ActionResult<ScanDto?>> GetScan(int id)
     {
         var scan = await _context.Scans
             .AsNoTracking()
@@ -37,7 +41,7 @@ public class ScanController : ControllerBase
             .Include(s => s.Item)
             .FirstOrDefaultAsync(s => s.Id == id);
         
-        return new ScanResponse
+        return new ScanDto
         {
             Id = scan.Id,
             ItemId = scan.Item?.Id??0,
@@ -144,34 +148,17 @@ public class ScanController : ControllerBase
 
     [HttpGet("order/{id}")]
     [Authorize(Policy = Policies.RequirePicker)]
-    public async Task<ActionResult<IEnumerable<ScanResponse>>> GetScansByOrderId(int id)
+    public async Task<ActionResult<IEnumerable<ScanDto>>> GetScansByOrderId(int id)
     {
         var scans = await _context.Scans
             .AsNoTracking()
             .Include(s => s.Box)
             .Include(s => s.User)
             .Where(s => s.Order.Id == id)
+            .ProjectTo<ScanDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
-        
-        var scansDto = new List<ScanResponse>();
 
-        foreach (var scan in scans)
-        {
-            var scanDto = new ScanResponse
-            {
-                Id = scan.Id,
-                Barcode = scan.Barcode,
-                TimeStamp = scan.TimeStamp,
-                Status = scan.Status,
-                BoxNumber = scan.Box.BoxNumber,
-                UserId = scan.User.Id,
-                Username = scan.User.Username,
-            };
-            
-            scansDto.Add(scanDto);
-        }
-
-        return scansDto;
+        return scans;
     }
 
     [HttpDelete]
@@ -286,15 +273,18 @@ public class ScanController : ControllerBase
         
         var response = await _scanService.ProcessScan(scanRequest);
         
+        if (response is null) return BadRequest("Order not found");
+        
         Console.WriteLine($"Time before SignalR: {DateTime.Now - startTime}");
 
-        var groupName = $"Order_{response.OrderId}";
-        await _hubContext.Clients.Group(groupName).SendAsync("scanProcessed", response.OrderId, response.Id, response.BoxNumber, response.BoxId, response.ItemId);
+        var groupName = $"Order_{response.Scan.OrderId}";
+        await _hubContext.Clients.Group(groupName).SendAsync("scanProcessed", response);
 
         Console.WriteLine($"Time for scan: {DateTime.Now - startTime}");
         
         Console.WriteLine("Send To Group" + groupName);
-        Console.WriteLine("respone box id " + response.BoxId);
-        return response;
+        Console.WriteLine("respone box id " + response.Scan.BoxId);
+        
+        return Ok(response);
     }
 }
