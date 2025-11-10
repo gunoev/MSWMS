@@ -14,7 +14,7 @@ public interface IScanService
 
     public void UpdateScan(Scan scan);*/
 
-    public Task<ScanResponse> ProcessScan(ScanRequest request);
+    public Task<ScanResponse?> ProcessScan(ScanRequest request);
     
     public Task<Item?> GetItemByBarcodeAndOrder(string barcode, int orderId);
     
