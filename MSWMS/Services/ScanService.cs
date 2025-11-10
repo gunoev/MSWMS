@@ -61,8 +61,7 @@ public class ScanService : IScanService
             {
                 Scan = _mapper.Map<ScanDto>(scan),
                 Box = _mapper.Map<BoxDto>(box),
-                Item = null,
-                Username = user.Username
+                Item = null
             };
         }
         if (GetScannedQuantity(item, order).Result < item.NeededQuantity)
@@ -75,8 +74,7 @@ public class ScanService : IScanService
             {
                 Scan = _mapper.Map<ScanDto>(scan),
                 Box = _mapper.Map<BoxDto>(box),
-                Item = _mapper.Map<ItemDto>(item),
-                Username = user.Username
+                Item = _mapper.Map<ItemDto>(item)
             };
             scanResponse.Item.Scanned = (uint)GetScannedQuantity(item, order).Result;
             scanResponse.Item.Remaining = (int)(item.NeededQuantity - scanResponse.Item.Scanned);
@@ -92,8 +90,7 @@ public class ScanService : IScanService
             {
                 Scan = _mapper.Map<ScanDto>(scan),
                 Box = _mapper.Map<BoxDto>(box),
-                Item = _mapper.Map<ItemDto>(item),
-                Username = user.Username
+                Item = _mapper.Map<ItemDto>(item)
             };
             scanResponse.Item.Scanned = (uint)GetScannedQuantity(item, order).Result;
             scanResponse.Item.Remaining = (int)(item.NeededQuantity - scanResponse.Item.Scanned);
@@ -108,8 +105,7 @@ public class ScanService : IScanService
         {
             Scan = _mapper.Map<ScanDto>(scan),
             Box = _mapper.Map<BoxDto>(box),
-            Item = _mapper.Map<ItemDto>(item),
-            Username = user.Username
+            Item = _mapper.Map<ItemDto>(item)
         };
         
     }
