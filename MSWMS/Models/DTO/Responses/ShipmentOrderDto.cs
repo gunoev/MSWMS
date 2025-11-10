@@ -15,6 +15,7 @@ public class ShipmentOrderDto
     public int LoadedBoxes { get; set; }
     public int TotalItems { get; set; }
     public int TotalCollectedItems { get; set; }
+    public int TotalLoadedItems { get; set; }
     public string? Priority { get; set; }
     public string? Status { get; set; }
     public string? Remark { get; set; }

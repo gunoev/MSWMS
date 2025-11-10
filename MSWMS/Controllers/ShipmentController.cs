@@ -52,36 +52,43 @@ namespace MSWMS.Controllers
 
             var shipments = await query.ToListAsync();
 
-            // Загружаем связанные данные отдельными запросами для лучшей производительности
-            var shipmentIds = shipments.Select(s => s.Id).ToList();
             var orderIds = shipments.SelectMany(s => s.Orders.Select(o => o.Id)).ToList();
 
-            // Загружаем количество коробок для каждого заказа
             var boxCounts = await _context.Boxes
                 .Where(b => orderIds.Contains(b.Order.Id))
                 .GroupBy(b => b.Order.Id)
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            // Загружаем общее количество товаров для каждого заказа
-            var itemQuantities = 10;
-
-            // Загружаем количество сканирований для каждого заказа
             var scanCounts = await _context.Scans
                 .Where(s => orderIds.Contains(s.Order.Id))
                 .GroupBy(s => s.Order.Id)
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToListAsync();
-
-            // Создаем словари для быстрого поиска
+            
             var boxCountDict = boxCounts.ToDictionary(x => x.OrderId, x => x.Count);
             var loadedBoxCounts = await _context.ShipmentEvents
-                .Where(e => orderIds.Contains(e.Order.Id) && e.Action == ShipmentEvent.ShipmentAction.Load)
+                .Where(e => orderIds.Contains(e.Order.Id) && e.Action == ShipmentEvent.ShipmentAction.Load && e.Status == ShipmentEvent.EventStatus.Ok)
                 .GroupBy(e => e.Order.Id)
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToListAsync();
 
             var loadedBoxCountDict = loadedBoxCounts.ToDictionary(x => x.OrderId, x => x.Count);
+            
+            var loadedBoxIds = await _context.ShipmentEvents
+                .Where(e => orderIds.Contains(e.Order.Id) && e.Action == ShipmentEvent.ShipmentAction.Load)
+                .Select(e => e.Box.Id)
+                .ToListAsync();
+
+            var loadedItemsCounts = await _context.Scans
+                .Where(s => orderIds.Contains(s.Order.Id) && loadedBoxIds.Contains(s.Box.Id))
+                .GroupBy(s => s.Order.Id)
+                .Select(g => new { OrderId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var loadedItemsCountDict = loadedItemsCounts.ToDictionary(x => x.OrderId, x => x.Count);
+
+
 
             return shipments.Select(s => new ShipmentDto
             {
@@ -97,7 +104,7 @@ namespace MSWMS.Controllers
                     var dto = _mapper.Map<ShipmentOrderDto>(o);
                     dto.LoadedBoxes = loadedBoxCountDict.GetValueOrDefault(o.Id, 0);
                     dto.Boxes = boxCountDict.GetValueOrDefault(o.Id, 0);
-                    dto.TotalCollectedItems = scanCounts.FirstOrDefault(c => c.OrderId == o.Id)?.Count ?? 0;
+                    dto.TotalLoadedItems = loadedItemsCountDict.GetValueOrDefault(o.Id, 0);
                     return dto;
                 }).ToList()
             }).ToList();
