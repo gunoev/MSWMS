@@ -138,7 +138,7 @@ namespace MSWMS.Controllers
             return result;
         }
         
-        // POST: api/Order/upload-csv
+        // POST: api/ItemInfo/upload-csv
         [HttpPost("upload-csv")]
         [RequestSizeLimit(300_000_000)] // 300 MB
         [Authorize(Policy = Policies.RequireAdmin)]
