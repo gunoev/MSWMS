@@ -71,27 +71,33 @@ public class ScanService : IScanService
             await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
             
-            return new ScanResponse
+            var scanResponse = new ScanResponse
             {
                 Scan = _mapper.Map<ScanDto>(scan),
                 Box = _mapper.Map<BoxDto>(box),
                 Item = _mapper.Map<ItemDto>(item),
                 Username = user.Username
             };
+            scanResponse.Item.Scanned = (uint)GetScannedQuantity(item, order).Result;
+            scanResponse.Item.Remaining = (int)(item.NeededQuantity - scanResponse.Item.Scanned);
+            return scanResponse;
         }
-        if (item != null &&  (GetScannedQuantity(item, order).Result >= item.NeededQuantity))
+        if (item != null && (GetScannedQuantity(item, order).Result >= item.NeededQuantity))
         {
             scan = ScanFactory.CreateExcess(request.Barcode, item, box, order, user);
             await AddScanToOrder(scan, order);
             await _context.SaveChangesAsync();
             
-            return new ScanResponse
+            var scanResponse = new ScanResponse
             {
                 Scan = _mapper.Map<ScanDto>(scan),
                 Box = _mapper.Map<BoxDto>(box),
                 Item = _mapper.Map<ItemDto>(item),
                 Username = user.Username
             };
+            scanResponse.Item.Scanned = (uint)GetScannedQuantity(item, order).Result;
+            scanResponse.Item.Remaining = (int)(item.NeededQuantity - scanResponse.Item.Scanned);
+            return scanResponse;
         }
         
         scan = ScanFactory.CreateError(request.Barcode, item, box, order, user);
@@ -118,6 +124,7 @@ public class ScanService : IScanService
         Item? item = await _context.Orders
             .Where(o => o.Id == orderId)
             .SelectMany(o => o.Items)
+            .Include(i => i.ItemInfo)
             .FirstOrDefaultAsync(i => i.ItemInfo.Any(iif => iif.Barcode == barcode));
 
         return item;
