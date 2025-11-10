@@ -1,6 +1,6 @@
-using MSWMS.Entities;
+using MSWMS.Models.Responses;
 
-namespace MSWMS.Models.Responses;
+namespace MSWMS.Models.DTO.Responses;
 public class ScanResponse
 {
     public required ScanDto Scan { get; set; }

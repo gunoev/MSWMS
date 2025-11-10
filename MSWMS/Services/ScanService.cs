@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Factories;
+using MSWMS.Models.DTO.Responses;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
 using MSWMS.Services.Interfaces;

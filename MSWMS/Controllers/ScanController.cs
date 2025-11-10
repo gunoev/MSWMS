@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Hubs;
 using MSWMS.Infrastructure.Authorization;
+using MSWMS.Models.DTO.Responses;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
 using MSWMS.Services.Interfaces;
