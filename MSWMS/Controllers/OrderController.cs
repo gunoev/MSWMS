@@ -226,6 +226,11 @@ namespace MSWMS.Controllers
             {
                 return BadRequest("Order with this shipment id already exists");
             }
+
+            if (_context.Orders.Any(o => o.TransferShipmentNumber == orderRequest.TransferShipmentNumber))
+            {
+                return BadRequest("Order with this transfer shipment already exists");
+            }
             
             var user = _context.Users.FirstOrDefault(u => u.Username == User.Identity.Name);
             orderRequest.UserId = user.Id;
