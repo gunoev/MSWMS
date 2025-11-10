@@ -54,7 +54,10 @@ public class BoxService
     {
         try
         {
-            return await _context.Boxes.Include(b => b.User).FirstOrDefaultAsync(b => b.BoxNumber == boxNumber && b.Order.Id == orderId);
+            return await _context.Boxes
+                .Include(b => b.User)
+                .Include(b => b.Scans)
+                .FirstOrDefaultAsync(b => b.BoxNumber == boxNumber && b.Order.Id == orderId);
         }
         catch (Exception e)
         {
