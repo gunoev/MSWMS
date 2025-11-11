@@ -28,7 +28,7 @@ public class AppDbContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         if (!optionsBuilder.IsConfigured)
-        {
+        {   
             optionsBuilder.UseSqlite("Data Source=mswms.db");
         }
     }
@@ -54,16 +54,18 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Scan>()
             .HasOne(x => x.Item)
-            .WithMany();
+            .WithMany()
+            .OnDelete(DeleteBehavior.ClientSetNull);
         
         modelBuilder.Entity<Scan>()
             .HasOne(x => x.Box)
             .WithMany(x => x.Scans)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         modelBuilder.Entity<Scan>()
             .HasOne(x => x.User)
-            .WithMany();
+            .WithMany()
+            .OnDelete(DeleteBehavior.ClientSetNull);
 
         modelBuilder.Entity<Scan>()
             .HasIndex(s => s.TimeStamp);
@@ -137,7 +139,8 @@ public class AppDbContext : DbContext
         
         modelBuilder.Entity<ShipmentEvent>()
             .HasOne(e => e.Box)
-            .WithMany();
+            .WithMany()
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<ShipmentEvent>()
             .HasOne(s => s.User)

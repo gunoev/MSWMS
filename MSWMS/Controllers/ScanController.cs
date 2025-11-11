@@ -236,31 +236,62 @@ public class ScanController : ControllerBase
             return NotFound();
         }
 
-        foreach (var scan in scans)
+        // Группируем информацию для отправки уведомлений
+        var scanInfos = scans.Select(s => new
         {
-            _context.Scans.Remove(scan);
-            
-            await _context.SaveChangesAsync();
+            ScanId = s.Id,
+            OrderId = s.Order.Id,
+            BoxId = s.Box.Id,
+            BoxNumber = s.Box.BoxNumber,
+            ItemId = s.Item?.Id,
+            Order = s.Order
+        }).ToList();
 
-            var box = await _context.Boxes
-                .Include(b => b.Scans)
-                .FirstOrDefaultAsync(b => b.Id == scan.Box.Id);
+        // Получаем Box'ы которые нужно проверить на пустоту ПЕРЕД удалением
+        var boxIds = scans.Select(s => s.Box.Id).Distinct().ToList();
 
-            if (box != null && box.Scans?.Count == 0)
-            {
-                _context.Boxes.Remove(scan.Box);
-                
-                await _hubContext.Clients.Group($"Order_{scan.Order.Id}").SendAsync("boxDeleted", scan.Order.Id, box.Id, box.BoxNumber);
-            }
+        // Удаляем все Scans
+        _context.Scans.RemoveRange(scans);
+        await _context.SaveChangesAsync();
 
-            var groupName = $"Order_{scan.Order.Id}";
+        // Отправляем уведомления об удалении Scans
+        foreach (var info in scanInfos)
+        {
+            var groupName = $"Order_{info.OrderId}";
             await _hubContext.Clients.Group(groupName)
-                .SendAsync("scanDeleted", scan.Order.Id, scan.Id, scan.Box.Id, scan.Box.BoxNumber, scan.Item?.Id);
-            
-            await _orderService.UpdateOrderStatus(scan.Order);
+                .SendAsync("scanDeleted", info.OrderId, info.ScanId, info.BoxId, info.BoxNumber, info.ItemId);
         }
 
-        await _context.SaveChangesAsync();
+        // Проверяем и удаляем пустые Box'ы
+        var boxesToCheck = await _context.Boxes
+            .Include(b => b.Scans)
+            .Where(b => boxIds.Contains(b.Id))
+            .ToListAsync();
+
+        var emptyBoxes = boxesToCheck.Where(b => b.Scans == null || !b.Scans.Any()).ToList();
+
+        if (emptyBoxes.Any())
+        {
+            foreach (var box in emptyBoxes)
+            {
+                _context.Boxes.Remove(box);
+                
+                // Находим OrderId для этого Box (из scanInfos)
+                var orderId = scanInfos.First(s => s.BoxId == box.Id).OrderId;
+                await _hubContext.Clients.Group($"Order_{orderId}")
+                    .SendAsync("boxDeleted", orderId, box.Id, box.BoxNumber);
+            }
+            
+            await _context.SaveChangesAsync();
+        }
+
+        // Обновляем статусы заказов
+        var affectedOrders = scanInfos.Select(s => s.Order).Distinct().ToList();
+        foreach (var order in affectedOrders)
+        {
+            await _orderService.UpdateOrderStatus(order);
+        }
+
         return NoContent();
     }
 

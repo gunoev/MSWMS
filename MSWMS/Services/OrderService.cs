@@ -1,4 +1,4 @@
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Repositories;
 
