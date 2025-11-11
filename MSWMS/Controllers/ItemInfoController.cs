@@ -156,7 +156,7 @@ namespace MSWMS.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            parser.Parse(tempFilePath);
+            parser.ParseAndUpdate(tempFilePath);
 
             return 200;
         }
