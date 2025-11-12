@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.Auth;
 using MSWMS.Services;
 using MSWMS.Services.Interfaces;
@@ -59,6 +60,21 @@ public class AuthController : ControllerBase
                 Roles = result.User.Roles.Select(r => r.Type.ToString())
             }
         });
+    }
+
+    [HttpPost("change-password")]
+    [Authorize(Policy = Policies.RequireAdmin)]
+    public async Task<IActionResult> ChangePassword(int userId, string newPassword)
+    {
+        try
+        {
+            await _authService.ChangePassword(userId, newPassword);
+            return Ok(new { Message = "Password changed successfully" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
     
     [HttpPost("register")]

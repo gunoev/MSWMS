@@ -7,6 +7,7 @@ public interface IAuthService
 {
     Task<AuthResult> Login(LoginModel model);
     Task<AuthResult> Register(RegisterModel model);
+    Task ChangePassword(int userId, string newPassword);
 }
 
 public class AuthResult

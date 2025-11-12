@@ -147,6 +147,19 @@ public class AuthService : IAuthService
             User = user
         };
     }
+
+    public async Task ChangePassword(int userId, string newPassword)
+    {
+        var user = await _dbContext.Users.FindAsync(userId);
+        
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found");
+        }
+        
+        user.PasswordHash = HashPassword(newPassword);
+        await _dbContext.SaveChangesAsync();
+    }
     
     private string GenerateJwtToken(User user)
     {
@@ -181,8 +194,6 @@ public class AuthService : IAuthService
     
     private string HashPassword(string password)
     {
-        // В реальном приложении используйте более надежный алгоритм хеширования паролей, 
-        // например, BCrypt или PBKDF2
         return BCrypt.Net.BCrypt.HashPassword(password);
     }
     
