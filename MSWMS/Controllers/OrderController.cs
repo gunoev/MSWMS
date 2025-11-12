@@ -211,14 +211,41 @@ namespace MSWMS.Controllers
 
         // POST: api/Order
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        /*[HttpPost]
-        public async Task<ActionResult<Order>> PostOrder(Order order)
+        [HttpPost("reset/{orderId}")]
+        [Authorize(Policy = Policies.RequireManager)]
+        public async Task<ActionResult> ResetOrder(int orderId)
         {
-            _context.Orders.Add(order);
+            var order = await _context.Orders
+                .Include(o => o.Scans)
+                .Include(o => o.Boxes)
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+    
+            if (order == null)
+            {
+                return BadRequest("Order not found");
+            }
+
+            if (await _context.Shipments.AnyAsync(s => s.Orders.Any(o => o.Id == orderId)))
+            {
+                return BadRequest("Order has shipments");
+            }
+    
+            if (order.Scans != null && order.Scans.Count != 0)
+            {
+                _context.RemoveRange(order.Scans);
+            }
+    
+            if (order.Boxes != null && order.Boxes.Count != 0)
+            {
+                _context.RemoveRange(order.Boxes);
+            }
+    
+            order.Status = Order.OrderStatus.New;
+    
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetOrder", new { id = order.Id }, order);
-        }*/
+            return Ok();
+        }
         
         [HttpPost]
         [Authorize(Policy = Policies.RequireManager)]
