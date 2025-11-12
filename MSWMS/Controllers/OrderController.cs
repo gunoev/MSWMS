@@ -164,6 +164,7 @@ namespace MSWMS.Controllers
 
         // GET: api/Order/5
         [HttpGet("{id}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<ActionResult<Order>> GetOrder(int id)
         {
             var order = await _context.Orders.FindAsync(id);
@@ -179,6 +180,7 @@ namespace MSWMS.Controllers
         // PUT: api/Order/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<IActionResult> PutOrder(int id, Order order)
         {
             if (id != order.Id)
@@ -245,6 +247,7 @@ namespace MSWMS.Controllers
 
         // DELETE: api/Order/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<IActionResult> DeleteOrder(int id)
         {
             var order = await _context.Orders.FindAsync(id);
@@ -297,6 +300,7 @@ namespace MSWMS.Controllers
 
         // POST: api/Order/upload-excel
         [HttpPost("upload-excel")]
+        [Authorize(Policy = Policies.RequireManager)]
         public async Task<ActionResult<ExcelParsedOrder>> UploadExcel(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -315,42 +319,5 @@ namespace MSWMS.Controllers
 
             return parsedOrder;
         }
-
-        /*// POST: api/Order/generate-test
-        [HttpPost("generate-test")]
-        public async Task<ActionResult<Order>> GenerateAndPostTestOrder()
-        {
-            _context.Locations.Add(new Location{Name = "Test Location"});
-            _context.Locations.Add(new Location{Name = "Test Location2"});
-            _context.SaveChanges();
-            _context.Roles.Add(new Role
-            {
-                Name = "AdminTest",
-                Type = Role.RoleType.Admin,
-            });
-            _context.SaveChanges();
-            _context.Users.Add(new User
-            {
-                Username = "Test User",
-                Status = Entities.User.UserStatus.Active,
-                Location = _context.Locations.First(e => e.Name == "Test Location"),
-                PasswordHash = "123",
-                Roles = new List<Role>(),
-            });
-            await _context.SaveChangesAsync();
-            var order = new Order
-            {
-                TransferOrderNumber = $"TO{DateTime.Now:yyyyMMddHHmmss}",
-                TransferShipmentNumber = $"TS{DateTime.Now:yyyyMMddHHmmss}",
-                Origin = _context.Locations.First(),
-                Destination = _context.Locations.Skip(1).First(),
-                ShipmentId = Guid.NewGuid().ToString(),
-                Type = Order.OrderType.Distribution,
-                CreatedBy = _context.Users.First(),
-                Items = new List<Item>()
-            };
-
-            return await PostOrder(order);
-        }*/
     }
 }
