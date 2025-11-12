@@ -50,25 +50,26 @@ namespace MSWMS.Controllers
             if (to.HasValue)
                 query = query.Where(s => s.Scheduled <= to.Value);
 
+            
             var shipments = await query.ToListAsync();
 
             var orderIds = shipments.SelectMany(s => s.Orders.Select(o => o.Id)).ToList();
 
             var boxCounts = await _context.Boxes
-                .Where(b => orderIds.Contains(b.Order.Id))
+                .Where(b => b.Order != null && orderIds.Contains(b.Order.Id))
                 .GroupBy(b => b.Order.Id)
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToListAsync();
 
             var scanCounts = await _context.Scans
-                .Where(s => orderIds.Contains(s.Order.Id))
+                .Where(s => s.Order != null && orderIds.Contains(s.Order.Id))
                 .GroupBy(s => s.Order.Id)
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToListAsync();
             
             var boxCountDict = boxCounts.ToDictionary(x => x.OrderId, x => x.Count);
             var loadedBoxCounts = await _context.ShipmentEvents
-                .Where(e => orderIds.Contains(e.Order.Id) && e.Action == ShipmentEvent.ShipmentAction.Load && e.Status == ShipmentEvent.EventStatus.Ok)
+                .Where(e => e.Order != null && orderIds.Contains(e.Order.Id) && e.Action == ShipmentEvent.ShipmentAction.Load && e.Status == ShipmentEvent.EventStatus.Ok)
                 .GroupBy(e => e.Order.Id)
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToListAsync();
@@ -76,18 +77,17 @@ namespace MSWMS.Controllers
             var loadedBoxCountDict = loadedBoxCounts.ToDictionary(x => x.OrderId, x => x.Count);
             
             var loadedBoxIds = await _context.ShipmentEvents
-                .Where(e => orderIds.Contains(e.Order.Id) && e.Action == ShipmentEvent.ShipmentAction.Load)
+                .Where(e => e.Box != null && e.Order != null && orderIds.Contains(e.Order.Id) && e.Action == ShipmentEvent.ShipmentAction.Load)
                 .Select(e => e.Box.Id)
                 .ToListAsync();
 
             var loadedItemsCounts = await _context.Scans
-                .Where(s => orderIds.Contains(s.Order.Id) && loadedBoxIds.Contains(s.Box.Id))
+                .Where(s => s.Box != null && s.Order != null && orderIds.Contains(s.Order.Id) && loadedBoxIds.Contains(s.Box.Id))
                 .GroupBy(s => s.Order.Id)
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToListAsync();
 
             var loadedItemsCountDict = loadedItemsCounts.ToDictionary(x => x.OrderId, x => x.Count);
-
 
 
             return shipments.Select(s => new ShipmentDto
