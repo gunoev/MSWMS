@@ -131,32 +131,36 @@ namespace MSWMS.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         [Authorize(Policy = Policies.RequireDispatcher)]
-        public async Task<IActionResult> PutShipment(int id, Shipment shipment)
+        public async Task<IActionResult> PutShipment(int id, CreateShipmentRequest request)
         {
-            if (id != shipment.Id)
+            var shipment = await _context.Shipments
+                .Include(s => s.Orders)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (shipment == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(shipment).State = EntityState.Modified;
-
-            try
+            var location = await _context.Locations.FindAsync(request.LocationId);
+            if (location == null)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ShipmentExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound("Location not found");
             }
 
-            return NoContent();
+            var orders = await _context.Orders.Where(o => request.OrderIds.Contains(o.Id)).ToListAsync();
+            if (!orders.Any())
+            {
+                return NotFound("Orders not found");
+            }
+
+            shipment.Destination = location;
+            shipment.Orders = orders;
+            shipment.Scheduled = request.Scheduled;
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
         // POST: api/Shipment
