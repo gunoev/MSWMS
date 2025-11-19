@@ -180,15 +180,51 @@ namespace MSWMS.Controllers
         // PUT: api/Order/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        [Authorize(Policy = Policies.RequireAdmin)]
-        public async Task<IActionResult> PutOrder(int id, Order order)
+        [Authorize(Policy = Policies.RequireManager)]
+        public async Task<IActionResult> PutOrder(int id, CreateOrderRequest orderRequest)
         {
-            if (id != order.Id)
+
+            return Forbid(); // not implemented yet
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .Include(o => o.CreatedBy)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(order).State = EntityState.Modified;
+            if (order.ShipmentId != orderRequest.ShipmentId && 
+                await _context.Orders.AnyAsync(o => o.ShipmentId == orderRequest.ShipmentId))
+            {
+                return BadRequest("Order with this shipment id already exists");
+            }
+
+            if (order.TransferShipmentNumber != orderRequest.TransferShipmentNumber && 
+                await _context.Orders.AnyAsync(o => o.TransferShipmentNumber == orderRequest.TransferShipmentNumber))
+            {
+                return BadRequest("Order with this transfer shipment already exists");
+            }
+
+            orderRequest.UserId = order.CreatedBy.Id;
+
+            var newOrderState = await orderRequest.ToEntity(_context);
+
+            order.ShipmentId = newOrderState.ShipmentId;
+            order.TransferOrderNumber = newOrderState.TransferOrderNumber;
+            order.TransferShipmentNumber = newOrderState.TransferShipmentNumber;
+            order.Origin = newOrderState.Origin;
+            order.Destination = newOrderState.Destination;
+            order.Status = newOrderState.Status;
+            order.Type = newOrderState.Type;
+            order.Priority = newOrderState.Priority;
+            
+            if (order.Items != null && order.Items.Any())
+            {
+                _context.RemoveRange(order.Items);
+            }
+            order.Items = newOrderState.Items;
 
             try
             {
@@ -206,7 +242,7 @@ namespace MSWMS.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/Order
