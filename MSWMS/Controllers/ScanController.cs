@@ -211,9 +211,9 @@ public class ScanController : ControllerBase
 
     }
 
-    [HttpDelete("delete-many")]
+    [HttpDelete("delete-many/{orderId}")]
     [Authorize(Policy = Policies.RequirePicker)]
-    public async Task<IActionResult> DeleteScans(IEnumerable<int> ids)
+    public async Task<IActionResult> DeleteScans(IEnumerable<int> ids, int orderId)
     {
         var userName = User.Identity?.Name;
         var user = await _context.Users
@@ -226,43 +226,45 @@ public class ScanController : ControllerBase
 
         var scans = await _context.Scans
             .Include(s => s.Box)
+            .ThenInclude(b => b.Scans)
             .Include(s => s.Order)
             .Include(s => s.Item)
-            .Where(s => ids.Contains(s.Id) && s.User.Username == userName)
+            .ThenInclude(i => i.ItemInfo)
+            .Where(s => ids.Contains(s.Id) && s.User.Username == userName && s.Order.Id == orderId)
             .ToListAsync();
 
         if (!scans.Any())
         {
             return NotFound();
         }
-
-        // Группируем информацию для отправки уведомлений
-        var scanInfos = scans.Select(s => new
-        {
-            ScanId = s.Id,
-            OrderId = s.Order.Id,
-            BoxId = s.Box.Id,
-            BoxNumber = s.Box.BoxNumber,
-            ItemId = s.Item?.Id,
-            Order = s.Order
-        }).ToList();
-
-        // Получаем Box'ы которые нужно проверить на пустоту ПЕРЕД удалением
+        
         var boxIds = scans.Select(s => s.Box.Id).Distinct().ToList();
 
-        // Удаляем все Scans
         _context.Scans.RemoveRange(scans);
         await _context.SaveChangesAsync();
-
-        // Отправляем уведомления об удалении Scans
-        foreach (var info in scanInfos)
+        
+        ItemDto CalcItemDto(Scan scan)
         {
-            var groupName = $"Order_{info.OrderId}";
-            await _hubContext.Clients.Group(groupName)
-                .SendAsync("scanDeleted", info.OrderId, info.ScanId, info.BoxId, info.BoxNumber, info.ItemId);
+            var dto = _mapper.Map<ItemDto>(scan.Item);
+            dto.Scanned = (uint)_scanService.GetScannedQuantity(scan.Item, scan.Order).Result;
+            dto.Remaining = (int)(scan.Item.NeededQuantity - dto.Scanned);
+            return dto;
         }
 
-        // Проверяем и удаляем пустые Box'ы
+        var scanInfos = scans.Select(s => new ScanResponse
+        {
+            Scan = _mapper.Map<ScanDto>(s),
+            Box = _mapper.Map<BoxDto>(s.Box),
+            Item = CalcItemDto(s),
+        }).ToList();
+
+        foreach (var info in scanInfos)
+        {
+            var groupName = $"Order_{orderId}";
+            await _hubContext.Clients.Group(groupName)
+                .SendAsync("scanDeleted", info);
+        }
+
         var boxesToCheck = await _context.Boxes
             .Include(b => b.Scans)
             .Where(b => boxIds.Contains(b.Id))
@@ -275,9 +277,7 @@ public class ScanController : ControllerBase
             foreach (var box in emptyBoxes)
             {
                 _context.Boxes.Remove(box);
-                
-                // Находим OrderId для этого Box (из scanInfos)
-                var orderId = scanInfos.First(s => s.BoxId == box.Id).OrderId;
+
                 await _hubContext.Clients.Group($"Order_{orderId}")
                     .SendAsync("boxDeleted", orderId, box.Id, box.BoxNumber);
             }
@@ -285,11 +285,11 @@ public class ScanController : ControllerBase
             await _context.SaveChangesAsync();
         }
 
-        // Обновляем статусы заказов
-        var affectedOrders = scanInfos.Select(s => s.Order).Distinct().ToList();
-        foreach (var order in affectedOrders)
+        var order = await _context.Orders.FindAsync(orderId);
+        
+        if (order is not null)
         {
-            await _orderService.UpdateOrderStatus(order);
+            await _orderService.UpdateOrderStatus(order.Id);   
         }
 
         return NoContent();
