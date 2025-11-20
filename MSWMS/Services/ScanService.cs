@@ -142,7 +142,7 @@ public class ScanService : IScanService
             _context.Entry(order).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             
-            await _orderService.UpdateOrderStatus(order);
+            await _orderService.UpdateOrderStatus(order.Id);
         }
         catch (Exception e)
         {
@@ -157,7 +157,7 @@ public class ScanService : IScanService
             order.Scans.Remove(scan);
             await _context.SaveChangesAsync();
             
-            await _orderService.UpdateOrderStatus(order);
+            await _orderService.UpdateOrderStatus(order.Id);
         }
         catch (Exception e)
         {

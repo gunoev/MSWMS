@@ -20,8 +20,14 @@ public class OrderService
         return await _orderRepository.GetByIdAsync(id);
     }
     
-    public async Task UpdateOrderStatus(Order order)
+    public async Task UpdateOrderStatus(int orderId)
     {
+        var order = await _context.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+        
+        if (order == null) return;
+        
         var currentStatus = order.Status;
     
         var totalNeededQuantity = order.Items.Sum(i => i.NeededQuantity);

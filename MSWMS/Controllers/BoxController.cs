@@ -155,7 +155,7 @@ namespace MSWMS.Controllers
             var groupName = $"Order_{box.Order.Id}";
             await _hubContext.Clients.Group(groupName).SendAsync("boxDeleted", box.Order.Id, box.Id, box.BoxNumber);
             
-            await _orderService.UpdateOrderStatus(box.Order);
+            await _orderService.UpdateOrderStatus(box.Order.Id);
 
 
             return NoContent();
