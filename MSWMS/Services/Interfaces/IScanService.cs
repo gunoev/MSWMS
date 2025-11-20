@@ -22,9 +22,11 @@ public interface IScanService
     public Task AddScanToOrder(Scan scan, Order order);
     
     public void DeleteScanFromOrder(Scan scan, Order order);
-    
+
+    public Task<int> GetScannedQuantity(Item item, Order order);
+
     /*
     public List<Scan> GetScans();
-    
+
     public List<Scan> GetScansByOrder(int orderId);*/
 }
