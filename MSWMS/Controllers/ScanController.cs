@@ -22,6 +22,7 @@ public class ScanController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IScanService _scanService;
     private readonly OrderService _orderService;
+    private readonly BoxService _boxService;
     private readonly IHubContext<ScanHub> _hubContext;
     private readonly IMapper _mapper;
 
@@ -30,13 +31,15 @@ public class ScanController : ControllerBase
         IScanService scanService, 
         IHubContext<ScanHub> hubContext, 
         IMapper mapper, 
-        OrderService orderService)
+        OrderService orderService,
+        BoxService boxService)
     {
         _context = context;
         _scanService = scanService;
         _hubContext = hubContext;
         _mapper = mapper;
         _orderService = orderService;
+        _boxService = boxService;
     }
 
     [HttpGet("{id}")]
@@ -250,12 +253,12 @@ public class ScanController : ControllerBase
             dto.Remaining = (int)(scan.Item.NeededQuantity - dto.Scanned);
             return dto;
         }
-
+        
         var scanInfos = scans.Select(s => new ScanResponse
         {
             Scan = _mapper.Map<ScanDto>(s),
-            Box = _mapper.Map<BoxDto>(s.Box),
-            Item = CalcItemDto(s),
+            Box = _boxService.EntityToDto(s.Box),
+            Item = CalcItemDto(s), // вынести в сервис!
         }).ToList();
 
         foreach (var info in scanInfos)

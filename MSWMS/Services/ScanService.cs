@@ -61,7 +61,7 @@ public class ScanService : IScanService
             return new ScanResponse
             {
                 Scan = _mapper.Map<ScanDto>(scan),
-                Box = _mapper.Map<BoxDto>(box),
+                Box = _boxService.EntityToDto(box),
                 Item = null
             };
         }
@@ -74,7 +74,7 @@ public class ScanService : IScanService
             var scanResponse = new ScanResponse
             {
                 Scan = _mapper.Map<ScanDto>(scan),
-                Box = _mapper.Map<BoxDto>(box),
+                Box = _boxService.EntityToDto(box),
                 Item = _mapper.Map<ItemDto>(item)
             };
             scanResponse.Item.Scanned = (uint)GetScannedQuantity(item, order).Result;
@@ -90,7 +90,7 @@ public class ScanService : IScanService
             var scanResponse = new ScanResponse
             {
                 Scan = _mapper.Map<ScanDto>(scan),
-                Box = _mapper.Map<BoxDto>(box),
+                Box = _boxService.EntityToDto(box),
                 Item = _mapper.Map<ItemDto>(item)
             };
             scanResponse.Item.Scanned = (uint)GetScannedQuantity(item, order).Result;
@@ -105,7 +105,7 @@ public class ScanService : IScanService
         return new ScanResponse
         {
             Scan = _mapper.Map<ScanDto>(scan),
-            Box = _mapper.Map<BoxDto>(box),
+            Box = _boxService.EntityToDto(box),
             Item = _mapper.Map<ItemDto>(item)
         };
         
