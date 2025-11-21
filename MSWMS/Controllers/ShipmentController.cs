@@ -33,6 +33,11 @@ namespace MSWMS.Controllers
         [Authorize(Policy = Policies.RequireLoadingOperator)]
         public async Task<ActionResult<IEnumerable<ShipmentDto>>> GetShipments([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
+            if (from.HasValue && to.HasValue && (to.Value - from.Value).TotalDays > 7)
+            {
+                return BadRequest("Date range cannot be more than 1 week");
+            }
+            
             var query = _context.Shipments
                 .Include(s => s.Origin)
                 .Include(s => s.Destination)
