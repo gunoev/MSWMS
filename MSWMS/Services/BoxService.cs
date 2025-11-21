@@ -1,15 +1,19 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Models.Responses;
 
 namespace MSWMS.Services;
 
 public class BoxService
 {
     private readonly AppDbContext _context;
+    private readonly IMapper _mapper;
     
-    public BoxService(AppDbContext context)
+    public BoxService(AppDbContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
     
     public async void AddBox(Box box)
@@ -48,6 +52,13 @@ public class BoxService
         {
             throw; // TODO handle exception
         }
+    }
+
+    public BoxDto EntityToDto(Box box)
+    {
+        var dto = _mapper.Map<BoxDto>(box);
+        dto.HasShipmentEvents = _context.ShipmentEvents.Any(e => e.Box != null && e.Box.Id == box.Id);
+        return dto;
     }
 
     public async Task<Box?> GetBoxByNumberAndOrder(int boxNumber, int orderId)
