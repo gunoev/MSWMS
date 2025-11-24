@@ -150,14 +150,15 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<BCrypt.Net.BCrypt>();
 builder.Services.AddSignalR();
 
-// Добавьте CORS
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    options.AddPolicy("AllowAll", corsBuilder =>
     {
         {
-            builder
-                .WithOrigins("https://localhost:5173", "https://localhost:5262", "https://192.168.0.108:5262", "https://192.168.0.108:5173")
+            corsBuilder
+                .WithOrigins(allowedOrigins)
                 .AllowAnyMethod()
                 .AllowAnyHeader() 
                 .AllowCredentials();
