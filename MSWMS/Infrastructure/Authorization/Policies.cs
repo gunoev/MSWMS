@@ -39,6 +39,7 @@ public static class Policies
         options.AddPolicy(RequireLoadingOperator, policy =>
             policy.RequireRole(
                 nameof(Role.RoleType.LoadingOperator), 
+                nameof(Role.RoleType.Manager),
                 nameof(Role.RoleType.Dispatcher), 
                 nameof(Role.RoleType.Admin)));
         
