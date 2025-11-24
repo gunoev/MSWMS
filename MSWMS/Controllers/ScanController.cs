@@ -246,8 +246,9 @@ public class ScanController : ControllerBase
         _context.Scans.RemoveRange(scans);
         await _context.SaveChangesAsync();
         
-        ItemDto CalcItemDto(Scan scan)
+        ItemDto? CalcItemDto(Scan scan)
         {
+            if (scan.Item is null) return null;
             var dto = _mapper.Map<ItemDto>(scan.Item);
             dto.Scanned = (uint)_scanService.GetScannedQuantity(scan.Item, scan.Order).Result;
             dto.Remaining = (int)(scan.Item.NeededQuantity - dto.Scanned);
