@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Infrastructure.Authorization;
 using MSWMS.Models.Responses;
 
 namespace MSWMS.Controllers
@@ -22,6 +24,7 @@ namespace MSWMS.Controllers
         }
 
         [HttpGet("order/{orderId}")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<ItemDto>>> GetOrderItems(int orderId)
         {
             // speedup. now average 300 ms for 1000 items
@@ -48,6 +51,7 @@ namespace MSWMS.Controllers
 
         
         [HttpGet("remaining/{barcode}")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<object>>> GetRemaining(string barcode)
         {
             return await _context.Orders
@@ -78,6 +82,7 @@ namespace MSWMS.Controllers
 
         // GET: api/Item/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<ItemDto>> GetItem(int id)
         {
             var startTime = DateTime.Now;
@@ -111,6 +116,7 @@ namespace MSWMS.Controllers
         // PUT: api/Item/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<IActionResult> PutItem(int id, Item item)
         {
             if (id != item.Id)
@@ -142,6 +148,7 @@ namespace MSWMS.Controllers
         // POST: api/Item
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<ActionResult<Item>> PostItem(Item item)
         {
             _context.Items.Add(item);
@@ -152,6 +159,7 @@ namespace MSWMS.Controllers
 
         // DELETE: api/Item/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<IActionResult> DeleteItem(int id)
         {
             var item = await _context.Items.FindAsync(id);

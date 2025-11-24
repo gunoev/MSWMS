@@ -26,6 +26,7 @@ namespace MSWMS.Controllers
 
         // GET: api/Order
         [HttpGet]
+        [Authorize]
         public async Task<ActionResult<OrderList>> GetOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             if (pageSize > 50)
@@ -56,6 +57,7 @@ namespace MSWMS.Controllers
         }
         
         [HttpGet("filter")]
+        [Authorize]
         public async Task<ActionResult<OrderList>> GetOrdersWithFilters(
             [FromQuery] int page = 1, 
             [FromQuery] int pageSize = 10,
@@ -151,6 +153,7 @@ namespace MSWMS.Controllers
 
 
         [HttpGet("details/{id}")]
+        [Authorize(Policy = Policies.RequirePicker)]
         public async Task<ActionResult<Order?>> GetOrderDetails(int id)
         {
             return await _context.Orders

@@ -52,7 +52,7 @@ namespace MSWMS.Controllers
 
         // GET: api/User/5
         [HttpGet("{id}")]
-        [Authorize(Policy = Policies.RequireManager)]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<ActionResult<User>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
@@ -68,7 +68,7 @@ namespace MSWMS.Controllers
         // PUT: api/User/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        [Authorize(Policy = Policies.RequireManager)]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<IActionResult> PutUser(int id, User user)
         {
             if (id != user.Id)

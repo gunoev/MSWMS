@@ -83,6 +83,7 @@ namespace MSWMS.Controllers
         // PUT: api/Box/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<IActionResult> PutBox(int id, Box box)
         {
             if (id != box.Id)
@@ -114,6 +115,7 @@ namespace MSWMS.Controllers
         // POST: api/Box
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Policy = Policies.RequireAdmin)]
         public async Task<ActionResult<Box>> PostBox(Box box)
         {
             _context.Boxes.Add(box);

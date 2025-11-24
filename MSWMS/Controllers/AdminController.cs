@@ -26,6 +26,7 @@ public class AdminController : ControllerBase
     }
     
     [HttpGet("users")]
+    [Authorize(Policy = Policies.RequireAdmin)]
     public IActionResult GetAllUsers()
     {
         var users = _dbContext.Users

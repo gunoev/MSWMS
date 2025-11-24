@@ -26,6 +26,7 @@ namespace MSWMS.Controllers
         }*/
 
         [HttpGet("barcode/{barcode}")]
+        [Authorize]
         public async Task<ActionResult<ItemInfo>> GetByBarcode(string barcode)
         {
             var itemInfo = await _context.ItemInfos.FirstOrDefaultAsync(inf => inf.Barcode == barcode);
@@ -39,6 +40,7 @@ namespace MSWMS.Controllers
         }
         
         [HttpGet("item-number/{itemNumber}")]
+        [Authorize]
         public async Task<ActionResult<List<ItemInfo>>> GetByItemNumber(string itemNumber)
         {
             var itemInfos = await _context.ItemInfos.Where(inf => inf.ItemNumber == itemNumber).ToListAsync();
@@ -48,6 +50,7 @@ namespace MSWMS.Controllers
 
         // GET: api/ItemInfo/5
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<ActionResult<ItemInfo>> GetItemInfo(int id)
         {
             var itemInfo = await _context.ItemInfos.FindAsync(id);

@@ -25,6 +25,7 @@ public class LocationController : ControllerBase
     
     // GET: api/Location
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult<LocationList>> GetLocations([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
 
@@ -51,6 +52,7 @@ public class LocationController : ControllerBase
     }
     
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<ActionResult<Location>> GetLocation(int id)
     {
         var location = await _context.Locations.FindAsync(id);
