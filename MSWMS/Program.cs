@@ -20,7 +20,7 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     options.ConfigureHttpsDefaults(httpsOptions =>
     {
-        httpsOptions.ServerCertificate = new X509Certificate2("C:/cert/aspnetapp.pfx");
+        httpsOptions.ServerCertificate = new X509Certificate2("aspnetapp.pfx");
     });
 });
 
