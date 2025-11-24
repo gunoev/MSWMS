@@ -7,6 +7,12 @@ namespace MSWMS.Infrastructure.Helpers;
 
 public class ItemInfoParser
 {
+    private readonly AppDbContext _context;
+    
+    public ItemInfoParser(AppDbContext context)
+    {
+        _context = context;
+    }
     public void Parse(string filePath)
     {
         var itemInfos = new List<ItemInfo>();
@@ -21,52 +27,49 @@ public class ItemInfoParser
 
         using (var reader = new StreamReader(filePath))
         using (var csv = new CsvReader(reader, config))
-        using (var context = new AppDbContext())
+        while (csv.Read())
         {
-            while (csv.Read())
+            var barcode = RemoveSpecialCharacters(csv.GetField(0) ?? string.Empty);
+            var itemNumber = csv.GetField(1);
+            var variant = csv.GetField(2);
+            var description = csv.GetField(3);
+            var price = decimal.TryParse(csv.GetField(4)?.Replace(',', '.') ?? string.Empty, NumberStyles.Float, CultureInfo.InvariantCulture, out var priceParsed) ? priceParsed : 0.0m;
+            var unitOfMeasure = csv.GetField(5);
+            var na = csv.GetField(6);
+            var discountPercentage = decimal.TryParse(csv.GetField(7), out var discountPerc) ? discountPerc : 0.0m;
+            var discountPrice = decimal.TryParse(csv.GetField(8)?.Replace(',', '.') ?? string.Empty, NumberStyles.Float, CultureInfo.InvariantCulture, out var discPrice) ? discPrice : 0.0m;
+            var currency = csv.GetField(9);
+
+            var itemInfo = new ItemInfo
             {
-                var barcode = RemoveSpecialCharacters(csv.GetField(0) ?? string.Empty);
-                var itemNumber = csv.GetField(1);
-                var variant = csv.GetField(2);
-                var description = csv.GetField(3);
-                var price = decimal.TryParse(csv.GetField(4)?.Replace(',', '.') ?? string.Empty, NumberStyles.Float, CultureInfo.InvariantCulture, out var priceParsed) ? priceParsed : 0.0m;
-                var unitOfMeasure = csv.GetField(5);
-                var na = csv.GetField(6);
-                var discountPercentage = decimal.TryParse(csv.GetField(7), out var discountPerc) ? discountPerc : 0.0m;
-                var discountPrice = decimal.TryParse(csv.GetField(8)?.Replace(',', '.') ?? string.Empty, NumberStyles.Float, CultureInfo.InvariantCulture, out var discPrice) ? discPrice : 0.0m;
-                var currency = csv.GetField(9);
+                Barcode = barcode,
+                ItemNumber = itemNumber ?? "",
+                Variant = variant,
+                Description = description,
+                Price = price,
+                UnitOfMeasure = unitOfMeasure,
+                Na = na,
+                DiscountPercentage = discountPercentage,
+                DiscountPrice = discountPrice,
+                Currency = currency
+            };
 
-                var itemInfo = new ItemInfo
-                {
-                    Barcode = barcode,
-                    ItemNumber = itemNumber ?? "",
-                    Variant = variant,
-                    Description = description,
-                    Price = price,
-                    UnitOfMeasure = unitOfMeasure,
-                    Na = na,
-                    DiscountPercentage = discountPercentage,
-                    DiscountPrice = discountPrice,
-                    Currency = currency
-                };
+            itemInfos.Add(itemInfo);
 
-                itemInfos.Add(itemInfo);
-
-                if (itemInfos.Count >= batchSize)
-                {
-                    context.ItemInfos.AddRange(itemInfos);
-                    context.SaveChanges();
-                    context.ChangeTracker.Clear();
-                    itemInfos.Clear();
-
-                }
-            }
-
-            if (itemInfos.Count > 0)
+            if (itemInfos.Count >= batchSize)
             {
-                context.ItemInfos.AddRange(itemInfos);
-                context.SaveChanges();
+                _context.ItemInfos.AddRange(itemInfos);
+                _context.SaveChanges();
+                _context.ChangeTracker.Clear();
+                itemInfos.Clear();
+
             }
+        }
+
+        if (itemInfos.Count > 0)
+        {
+            _context.ItemInfos.AddRange(itemInfos);
+            _context.SaveChanges();
         }
     }
     
@@ -85,9 +88,8 @@ public class ItemInfoParser
 
         using (var reader = new StreamReader(filePath))
         using (var csv = new CsvReader(reader, config))
-        using (var context = new AppDbContext())
         {
-            var existingBarcodesInDb = context.ItemInfos
+            var existingBarcodesInDb = _context.ItemInfos
                 .Select(i => i.Barcode)
                 .ToHashSet();
             
@@ -132,7 +134,7 @@ public class ItemInfoParser
 
                 if (itemInfos.Count >= batchSize)
                 {
-                    UpdateBatch(context, itemInfos, existingBarcodesInDb);
+                    UpdateBatch(_context, itemInfos, existingBarcodesInDb);
 
                     foreach (var item in itemInfos)
                     {
@@ -148,7 +150,7 @@ public class ItemInfoParser
 
             if (itemInfos.Count > 0)
             {
-                UpdateBatch(context, itemInfos, existingBarcodesInDb);
+                UpdateBatch(_context, itemInfos, existingBarcodesInDb);
             }
             
             if (skippedCount > 0)

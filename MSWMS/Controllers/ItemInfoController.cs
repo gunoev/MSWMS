@@ -150,7 +150,7 @@ namespace MSWMS.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("File is empty");
 
-            var parser = new ItemInfoParser();
+            var parser = new ItemInfoParser(_context);
             var extension = Path.GetExtension(file.FileName);
             var tempFilePath = Path.GetTempFileName() + extension;
             

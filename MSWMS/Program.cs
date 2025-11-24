@@ -24,10 +24,17 @@ builder.WebHost.ConfigureKestrel(options =>
     });
 });
 
-// Регистрация AppDbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlite("Data Source=mswms.db")
-);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (builder.Environment.IsDevelopment()) {
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlite("Data Source=mswms.db"));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(connectionString));   
+}
 
 builder.Services.AddAuthentication(options =>
     {

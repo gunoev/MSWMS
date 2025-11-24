@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MSWMS.Entities;
 
-public class AppDbContext : DbContext
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Order> Orders { get; set; }
     public DbSet<Box> Boxes { get; set; }
@@ -14,24 +14,21 @@ public class AppDbContext : DbContext
     public DbSet<Location> Locations { get; set; }
     public DbSet<Shipment> Shipments { get; set; }
     public DbSet<ShipmentEvent> ShipmentEvents { get; set; }
-    
-    public AppDbContext(DbContextOptionsBuilder? optionsBuilder = null)
-    {
-        if (optionsBuilder is not null)
-        {
-            OnConfiguring(optionsBuilder);
-        }
 
-        //Database.EnsureCreated();
-    }
-    
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
+        #if DEBUG
         if (!optionsBuilder.IsConfigured)
         {   
             optionsBuilder.UseSqlite("Data Source=mswms.db");
         }
-    }
+        #else
+        if (!optionsBuilder.IsConfigured)
+        {   
+            optionsBuilder.UseSqlServer("Data Source=mswms.db");
+        }
+        #endif
+    }*/
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
