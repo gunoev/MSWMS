@@ -4,6 +4,7 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+      <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     </PropertyGroup>
 
     <ItemGroup>
@@ -341,10 +342,53 @@
       <_ContentIncludedByDefault Remove="wwwroot\components\ui\tooltip\tooltip-content.svelte.d.ts" />
       <_ContentIncludedByDefault Remove="wwwroot\components\ui\tooltip\tooltip-trigger.svelte" />
       <_ContentIncludedByDefault Remove="wwwroot\components\ui\tooltip\tooltip-trigger.svelte.d.ts" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Migrations\" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\env.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\assets\0.WMYMwm7A.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\assets\3.CV-KWLNP.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\assets\4.CpFrZalS.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\assets\5.DmSEAI_T.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\assets\9.CDkTRKCT.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\assets\data-table.bHHIbcsu.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\69_IOA4Y.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\9eQ7Qamz.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\9rj67e6B.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\B29kkMeH.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\B9hu1mYT.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\BDBe4Pd3.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\BgpcLxz1.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\BiB3QSRc.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\BqW0Qhg3.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\Bs9BdT2B.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\Bu3XgvOg.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\BxkcTE2P.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\C3x8nC-5.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\C9aUfWfG.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\CG8iQORA.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\CH6xfQiC.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\CkW9w6w8.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\COfJe4ck.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\CRrWIqa6.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\CwH3msRh.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\D-dE5fVY.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\DIeogL5L.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\DsnmJJEf.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\DUfLMw22.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\UsJKEv58.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\chunks\ynK2TTKL.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\entry\app.scrDFD6h.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\entry\start.D0EnrSHS.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\0.IKSrCpbU.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\1.BT5_vhFv.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\10.DPzO339H.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\2.DdIMrnZT.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\3.BvOE__KU.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\4.CFFfPuFm.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\5.B5iopJa5.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\6.BJvtWKtn.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\7.C-pr-0NQ.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\8.dGrIysW0.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\immutable\nodes\9.-bR9kkYe.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\_app\version.json" />
     </ItemGroup>
 
 </Project>
