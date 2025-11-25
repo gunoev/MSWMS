@@ -73,7 +73,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         
         modelBuilder.Entity<Order>()
             .HasMany(x => x.Boxes)
-            .WithOne(x => x.Order);
+            .WithOne(x => x.Order)
+            .OnDelete(DeleteBehavior.NoAction);
         
         modelBuilder.Entity<Order>()
             .HasMany(x => x.Scans)
@@ -81,6 +82,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Order>()
             .HasMany(x => x.Users);
+
+        modelBuilder.Entity<Order>()
+            .HasOne(x => x.CreatedBy)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<Order>()
+            .HasOne(x => x.Destination)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<Order>()
+            .HasOne(x => x.Origin)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Order>()
             .HasMany(x => x.Shipments)
@@ -99,13 +115,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.Entity<ItemInfo>()
             .HasIndex(inf => inf.Barcode);
         
-        // LOCATIONS RELATIONSHIPS
-        modelBuilder.Entity<Location>()
-            .HasMany(o => o.OriginOrders).WithOne();
-        
-        modelBuilder.Entity<Location>()
-            .HasMany(o => o.DestinationOrders).WithOne();
-        
         // SHIPMENTS RELATIONSHIPS
         modelBuilder.Entity<Shipment>()
             .HasMany(s => s.Events)
@@ -113,7 +122,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Shipment>()
-            .HasOne(s => s.Destination);
+            .HasOne(s => s.Origin)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Shipment>()
+            .HasOne(s => s.Destination)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         modelBuilder.Entity<Shipment>()
             .HasOne(s => s.CreatedBy)
@@ -128,7 +145,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         // SHIPMENT EVENT RELATIONSHIPS
         modelBuilder.Entity<ShipmentEvent>()
             .HasOne(e => e.Location)
-            .WithMany();
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<ShipmentEvent>()
             .HasOne(e => e.Order)
@@ -141,7 +159,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<ShipmentEvent>()
             .HasOne(s => s.User)
-            .WithMany();
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
         
         modelBuilder.Entity<ShipmentEvent>()
             .HasIndex(e => e.Timestamp);
@@ -156,6 +175,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<Box>()
             .HasIndex(b => b.Guid);
+        
+        modelBuilder.Entity<Box>()
+            .HasOne(b => b.User)
+            .WithMany()
+            .OnDelete(DeleteBehavior.Restrict);
 
     }
 
