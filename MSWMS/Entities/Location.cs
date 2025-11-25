@@ -11,6 +11,4 @@ public class Location
     public string? ShortName { get; set; }
     [MaxLength(16)]
     public required string Code { get; set; }
-    public ICollection<Order>? OriginOrders { get; set; }
-    public ICollection<Order>? DestinationOrders { get; set; }
 }
