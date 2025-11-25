@@ -4,6 +4,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using MSWMS.Entities;
 using MSWMS.Hubs;
@@ -31,21 +32,28 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     options.ConfigureHttpsDefaults(httpsOptions =>
     {
-        httpsOptions.ServerCertificate = new X509Certificate2("aspnetapp.pfx");
+        if (builder.Environment.IsDevelopment())
+        {
+            httpsOptions.ServerCertificate = new X509Certificate2("aspnetapp_dev.pfx");   
+        }
+        else
+        {
+            httpsOptions.ServerCertificate = new X509Certificate2("aspnetapp.pfx", "123123");   
+        }
     });
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-if (builder.Environment.IsDevelopment()) {
+/*if (builder.Environment.IsDevelopment()) {
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlite("Data Source=mswms.db"));
 }
 else
-{
+{*/
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlServer(connectionString));   
-}
+//}
 
 builder.Services.AddAuthentication(options =>
     {
@@ -98,7 +106,7 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(
-                    builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT ключ не настроен")
+                    builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT key not found in configuration")
                 )
             )
         };
@@ -201,18 +209,16 @@ using (var scope = app.Services.CreateScope())
     var dbContext = services.GetRequiredService<AppDbContext>();
     var authService = services.GetRequiredService<IAuthService>();
     
+    await dbContext.Database.MigrateAsync();
+    
     await DataSeeder.SeedDefaultLocation(dbContext);
     await DataSeeder.SeedRoles(dbContext);
     await DataSeeder.SeedAdminUser(dbContext, authService);
 }
 
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 
 app.UseDefaultFiles();
