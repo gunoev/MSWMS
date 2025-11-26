@@ -45,15 +45,16 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-/*if (builder.Environment.IsDevelopment()) {
+if (builder.Environment.IsDevelopment())
+{
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlite("Data Source=mswms.db"));
+        options.UseSqlServer(connectionString));
 }
 else
-{*/
+{
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlServer(connectionString));   
-//}
+}
 
 builder.Services.AddAuthentication(options =>
     {
