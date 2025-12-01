@@ -38,6 +38,18 @@ namespace MSWMS.Controllers
         
             return itemInfo;
         }
+
+        [HttpGet("barcode-like/{barcode}")]
+        [Authorize]
+        public async Task<ActionResult<List<ItemInfo>>> GetByBarcodeLike(string barcode)
+        {
+            var itemInfos = await _context.ItemInfos
+                .Where(inf => inf.Barcode.Contains(barcode))
+                .Take(10)
+                .ToListAsync();
+        
+            return itemInfos;
+        }
         
         [HttpGet("item-number/{itemNumber}")]
         [Authorize]
