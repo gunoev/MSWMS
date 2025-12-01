@@ -25,8 +25,10 @@ public class CreateOrderRequest
         if (origin is null) throw new Exception("Origin location not found");
         if (destination is null) throw new Exception("Destination location not found");
         if (user is null) throw new Exception("User not found");
+        
+        var barcodes = Items.Select(i => i.Barcode).ToList();
 
-        var neededPairs = Items
+        var neededPairs = context.ItemInfos.Where(i => barcodes.Contains(i.Barcode))
             .Select(i => new { i.ItemNumber, i.Variant })
             .ToList();
 
@@ -37,7 +39,6 @@ public class CreateOrderRequest
             .Where(inf => itemNumbers.Contains(inf.ItemNumber)
                           && (inf.Variant == null || variants.Contains(inf.Variant))).ToListAsync();
         
-        // Если не найдено нужно добавить новую строку (с пометкой что это добавлено вручную)?
         
         var items = Items.Select(req =>
         {
