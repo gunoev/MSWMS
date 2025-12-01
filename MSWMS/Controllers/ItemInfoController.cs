@@ -45,6 +45,7 @@ namespace MSWMS.Controllers
         {
             var itemInfos = await _context.ItemInfos
                 .Where(inf => inf.Barcode.Contains(barcode))
+                .AsNoTracking()
                 .Take(10)
                 .ToListAsync();
         
