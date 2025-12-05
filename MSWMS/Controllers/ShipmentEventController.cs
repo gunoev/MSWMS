@@ -150,19 +150,22 @@ namespace MSWMS.Controllers
 
             var shipment = await _context.Shipments
                 .Include(s => s.Events)
+                .Include(s => s.Orders)
                 .FirstOrDefaultAsync(s => s.Id == eventRequest.ShipmentId);
 
             if (shipment is null)
             {
                 return NotFound("Shipment not found");
             }
+            
+            var orderIds = shipment.Orders.Select(o => o.Id).ToList();
 
             var box = await _context.Boxes
                 .Include(b => b.Order)
                 .ThenInclude(o => o.Origin)
                 .Include(b => b.Order)
                 .ThenInclude(o => o.Destination)
-                .FirstOrDefaultAsync(b => b.Guid.ToString() == eventRequest.Code);
+                .FirstOrDefaultAsync(b => b.Guid.ToString() == eventRequest.Code && orderIds.Contains(b.Order.Id)); 
             
             var eventStatus = ShipmentEvent.EventStatus.Ok;
             
