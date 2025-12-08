@@ -46,7 +46,7 @@ namespace MSWMS.Controllers
                     UserId = b.User.Id,
                     Username = b.User.Username,
                     Quantity = _context.Scans.
-                        Count(s => s.Box.Id == b.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess)),
+                        Count(s => s.Box.Id == b.Id && (s.Status == Scan.ScanStatus.Ok)),
                     HasShipmentEvents = _context.ShipmentEvents.Any(e => e.Box != null && e.Box.Id == b.Id)
                 })
                 .ToListAsync();
@@ -67,7 +67,7 @@ namespace MSWMS.Controllers
                     UserId = b.User.Id,
                     Username = b.User.Username,
                     Quantity = _context.Scans
-                        .Count(s => s.Box.Id == b.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess)),
+                        .Count(s => s.Box.Id == b.Id && (s.Status == Scan.ScanStatus.Ok)),
                     HasShipmentEvents = _context.ShipmentEvents.Any(e => e.Box.Id == b.Id)
                 })
                 .FirstOrDefaultAsync(b => b.Id == id);

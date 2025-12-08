@@ -57,7 +57,7 @@ namespace MSWMS.Controllers
                         UserId = e.Box.User.Id,
                         Username = e.Box.User.Username,
                         Quantity = _context.Scans
-                            .Count(s => s.Box.Id == e.Box.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))
+                            .Count(s => s.Box.Id == e.Box.Id && (s.Status == Scan.ScanStatus.Ok))
                     } : null,
                     Order = e.Order != null ? new ShipmentOrderDto 
                     { 

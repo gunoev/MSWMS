@@ -43,8 +43,8 @@ namespace MSWMS.Controllers
                     Price = i.ItemInfo.First().Price,
                     DiscountPrice = i.ItemInfo.First().DiscountPrice,
                     Quantity = (uint)i.NeededQuantity,
-                    Scanned = (uint)_context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess)),
-                    Remaining = i.NeededQuantity - _context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))
+                    Scanned = (uint)_context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok)),
+                    Remaining = i.NeededQuantity - _context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok))
                 })
                 .ToListAsync();
         }
@@ -59,7 +59,7 @@ namespace MSWMS.Controllers
                 .Where(o => o.Items.Any(i => 
                     i.ItemInfo.Any(info => info.Barcode == barcode) && 
                     i.NeededQuantity > _context.Scans.Count(s => s.Item.Id == i.Id && 
-                                                                 (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))))
+                                                                 (s.Status == Scan.ScanStatus.Ok))))
                 .Select(o => new
                 {
                     Id = o.Id,
@@ -70,11 +70,11 @@ namespace MSWMS.Controllers
                     CollectedQuantity = o.Items
                         .Where(i => i.ItemInfo.Any(info => info.Barcode == barcode))
                         .Sum(i => _context.Scans.Count(s => s.Item.Id == i.Id && 
-                                                           (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))),
+                                                           (s.Status == Scan.ScanStatus.Ok))),
                     RemainingQuantity = o.Items
                         .Where(i => i.ItemInfo.Any(info => info.Barcode == barcode))
                         .Sum(i => i.NeededQuantity - _context.Scans.Count(s => s.Item.Id == i.Id && 
-                                                                             (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess)))
+                                                                             (s.Status == Scan.ScanStatus.Ok)))
                     
                 })
                 .ToListAsync();
@@ -100,8 +100,8 @@ namespace MSWMS.Controllers
                     Price = i.ItemInfo.First().Price,
                     DiscountPrice = i.ItemInfo.First().DiscountPrice,
                     Quantity = (uint)i.NeededQuantity,
-                    Scanned = (uint)_context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess)),
-                    Remaining = i.NeededQuantity - _context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess))
+                    Scanned = (uint)_context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok)),
+                    Remaining = i.NeededQuantity - _context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok))
                 }).FirstOrDefaultAsync();
                 
 

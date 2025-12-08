@@ -48,7 +48,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.BoxNumber, opt => opt.MapFrom(src => src.BoxNumber))
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.User.Id))
             .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.User.Username))
-            .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Scans.Count(s => s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess)))
+            .ForMember(dest => dest.Quantity, opt => opt.MapFrom(src => src.Scans.Count(s => s.Status == Scan.ScanStatus.Ok)))
             .ForMember(dest => dest.HasShipmentEvents, opt => opt.Ignore());
         
         CreateMap<Item, ItemDto>()
