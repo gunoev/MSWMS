@@ -113,7 +113,7 @@ public class ScanService : IScanService
 
     public async Task<int> GetScannedQuantity(Item item, Order order)
     {
-        return await _context.Scans.CountAsync(s => s.Item.Id == item.Id && s.Order.Id == order.Id && (s.Status == Scan.ScanStatus.Ok || s.Status == Scan.ScanStatus.Excess));
+        return await _context.Scans.CountAsync(s => s.Item.Id == item.Id && s.Order.Id == order.Id && (s.Status == Scan.ScanStatus.Ok));
     }
 
     public async Task<Item?> GetItemByBarcodeAndOrder(string barcode, int orderId)
