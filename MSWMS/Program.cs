@@ -1,5 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json.Serialization;
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using MSWMS.Entities;
+using MSWMS.Entities.External;
 using MSWMS.Hubs;
 using MSWMS.Infrastructure;
 using MSWMS.Repositories;
@@ -27,7 +29,12 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Игнорировать циклические ссылки при генерации JSON
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.ConfigureHttpsDefaults(httpsOptions =>
@@ -49,11 +56,19 @@ if (builder.Environment.IsDevelopment())
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlServer(connectionString));
+    
+    builder.Services.AddDbContext<ExternalReadOnlyContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("ExternalDb")));
+
 }
 else
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(connectionString));   
+        options.UseSqlServer(connectionString));  
+    
+    builder.Services.AddDbContext<ExternalReadOnlyContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("ExternalDb")));
+
 }
 
 builder.Services.AddAuthentication(options =>
