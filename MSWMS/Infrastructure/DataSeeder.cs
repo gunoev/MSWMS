@@ -67,5 +67,18 @@ public static class DataSeeder
             dbContext.Locations.Add(defaultLocation);
             await dbContext.SaveChangesAsync();
         }
+        
+        if (!await dbContext.Locations.AnyAsync(l => l.Code == "SS1LOC"))
+        {
+            var defaultLocation = new Location
+            {
+                Name = "Sales Order Shipment",
+                Code = "SS1LOC",
+                ShortName = "SO"
+            };
+
+            dbContext.Locations.Add(defaultLocation);
+            await dbContext.SaveChangesAsync();
+        }
     }
 }
