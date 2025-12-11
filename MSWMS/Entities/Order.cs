@@ -37,7 +37,8 @@ public class Order
         Refill,
         Distribution,
         Other,
-        SalesOrder
+        SalesOrder,
+        TransferOrder
     }
 
     public enum OrderPriority
