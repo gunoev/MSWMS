@@ -25,10 +25,8 @@ public class CreateOrderRequest
         if (origin is null) throw new Exception("Origin location not found");
         if (destination is null) throw new Exception("Destination location not found");
         if (user is null) throw new Exception("User not found");
-        
-        var barcodes = Items.Select(i => i.Barcode).ToList();
 
-        var neededPairs = context.ItemInfos.Where(i => barcodes.Contains(i.Barcode))
+        var neededPairs = Items
             .Select(i => new { i.ItemNumber, i.Variant })
             .ToList();
 

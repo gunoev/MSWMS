@@ -5,7 +5,7 @@ namespace MSWMS.Models.Requests;
 
 public class CreateOrderItemRequest
 {
-    public required string Barcode { get; set; }
+    public string? Barcode { get; set; }
     public required string ItemNumber { get; set; }
     public string? Variant { get; set; }
     public string? Description { get; set; }
