@@ -8,6 +8,7 @@ using MSWMS.Infrastructure.Authorization;
 using MSWMS.Infrastructure.Helpers;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
+using MSWMS.Services;
 
 namespace MSWMS.Controllers
 {
@@ -17,11 +18,13 @@ namespace MSWMS.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly OrderService _orderService;
 
-        public OrderController(AppDbContext context, IMapper mapper)
+        public OrderController(AppDbContext context, IMapper mapper, OrderService orderService)
         {
             _context = context;
             _mapper = mapper;
+            _orderService = orderService;
         }
 
         // GET: api/Order
@@ -326,6 +329,32 @@ namespace MSWMS.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpGet("create/{ts}")]
+        [Authorize(Policy = Policies.RequireAdmin)]
+        public async Task<ActionResult<Order>> CreateOrder(string ts)
+        {
+            var order = await _orderService.CreateOrder(ts);
+            return Ok(order);
+        }
+
+        [HttpGet("get-id/{no}")]
+        [Authorize(Policy = Policies.RequirePicker)]
+        public async Task<ActionResult<int>> GetOrderId(string no)
+        {
+            var id = await _orderService.LocallyExists(no);
+            
+            if (id is null)
+            {
+                var order = await _orderService.CreateOrder(no);
+                
+                if (order is null) return NotFound();
+                
+                id = order.Id;
+            }
+            
+            return id;
         }
         
         // GET: api/Order/shipment-id-exist
