@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Entities.External;
+using MSWMS.Models.Requests;
 using MSWMS.Repositories;
 
 namespace MSWMS.Services;
@@ -8,16 +10,163 @@ public class OrderService
 {
     private IOrderRepository _orderRepository;
     private readonly AppDbContext _context;
+    private readonly ExternalReadOnlyContext _externalContext;
     
-    public OrderService(IOrderRepository orderRepository, AppDbContext context)
+    public OrderService(IOrderRepository orderRepository, AppDbContext context, ExternalReadOnlyContext externalContext)
     {
         _orderRepository = orderRepository;
         _context = context;
+        _externalContext = externalContext;
     }
     
     public async Task<Order?> GetByIdAsync(int id)
     {
         return await _orderRepository.GetByIdAsync(id);
+    }
+
+    public async Task<Order?> CreateOrder(string shipmentNumber)
+    {
+        Order? order = null;
+            
+        if (shipmentNumber.Contains("SS"))
+        {
+            order = await CreateSalesOrder(shipmentNumber);
+        }
+        else if (shipmentNumber.Contains("TS"))
+        {
+            order = await CreateTransferOrder(shipmentNumber);
+        }
+
+        return order;
+    }
+
+    private async Task<Order?> CreateTransferOrder(string shipmentNumber)
+    {
+        var shipment =
+            await _externalContext.MikesportCoSALTransferShipmentHeader
+                .Include(tsh => tsh.Lines)
+                .Select(tsh => new 
+                {
+                    No = tsh.No,
+                    TransferFromCode = tsh.TransferFromCode,
+                    TransferFromName = tsh.TransferFromName,
+                    TransferToCode = tsh.TransferToCode,
+                    TransferToName = tsh.TransferToName,
+                    TransferOrderDate = tsh.TransferOrderDate,
+                    PostingDate = tsh.PostingDate,
+                    TransferOrderNo = tsh.TransferOrderNo,
+                    TransferFromContact = tsh.TransferFromContact,
+                    TransferToContact = tsh.TransferToContact,
+                    ExternalDocumentNo = tsh.ExternalDocumentNo,
+                    Lines = tsh.Lines
+                        .Where(l => l.Quantity > 0)
+                        .Select(l => new 
+                    {
+                        ItemNo = l.ItemNo,
+                        VariantCode = l.VariantCode,
+                        Quantity = l.Quantity
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync(tsh => tsh.No == shipmentNumber);
+
+        if (shipment == null) return null;
+        
+        var createOrderRequest = new CreateOrderRequest
+        {
+            ShipmentId = shipment.No,
+            TransferOrderNumber = shipment.TransferOrderNo,
+            TransferShipmentNumber = shipment.No,
+            OriginId = _context.Locations.FirstOrDefault(l => l.Code == shipment.TransferFromCode)?.Id ?? 1,
+            DestinationId = _context.Locations.FirstOrDefault(l => l.Code == shipment.TransferToCode)?.Id ?? 0,
+            UserId = 1,
+            Priority = Order.OrderPriority.Medium,
+            Type = Order.OrderType.TransferOrder,
+            Items = shipment.Lines
+                .Where(l => l.Quantity > 0)
+                .Select(l => new CreateOrderItemRequest
+            {
+                ItemNumber = l.ItemNo,
+                Variant = l.VariantCode,
+                NeededQuantity = (int)l.Quantity
+            }).ToList()
+        };
+        
+        var order = createOrderRequest.ToEntity(_context).Result;
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+        
+        return order;
+    }
+
+    private async Task<Order?> CreateSalesOrder(string shipmentNumber)
+    {
+        var shipment =
+            await _externalContext.MikesportCoSALSalesShipmentHeader
+                .Include(ss => ss.Lines)
+                .Select(ss => new 
+                {
+                    No = ss.No,
+                    OrderNo = ss.OrderNo,
+                    SellToCustomerNo = ss.SellToCustomerNo,
+                    BillToCustomerNo = ss.BillToCustomerNo,
+                    BillToName = ss.BillToName,
+                    BillToAddress = ss.BillToAddress,
+                    ShipToName = ss.ShipToName,
+                    ShipToAddress = ss.ShipToAddress,
+                    OrderDate = ss.OrderDate,
+                    PostingDate = ss.PostingDate,
+                    ShipmentDate = ss.ShipmentDate,
+                    PostingDescription = ss.PostingDescription,
+                    LocationCode = ss.LocationCode,
+                    UserId = ss.UserId,
+                    Lines = ss.Lines
+                        .Where(l => 
+                            l.GenProdPostingGroup != "SERVICES" 
+                            && l.Quantity > 0
+                        )
+                        .Select(l => new 
+                        {
+                            No = l.No,
+                            VariantCode = l.VariantCode,
+                            Quantity = l.Quantity,
+                        }).ToList()
+                })
+                .FirstOrDefaultAsync(ss => ss.No == shipmentNumber);
+        
+        if (shipment == null) return null;
+        
+        
+        var createOrderRequest = new CreateOrderRequest
+        {
+            ShipmentId = shipment.No,
+            TransferOrderNumber = shipment.OrderNo,
+            TransferShipmentNumber = shipment.No,
+            OriginId = _context.Locations.FirstOrDefault(l => l.Code == shipment.LocationCode)?.Id ?? 1,
+            DestinationId = _context.Locations.FirstOrDefault(l => l.Code == "SS1LOC")?.Id ?? 0,
+            UserId = 1,
+            Priority = Order.OrderPriority.Medium,
+            Type = Order.OrderType.SalesOrder,
+            Items = shipment.Lines.Select(l => new CreateOrderItemRequest
+            {
+                ItemNumber = l.No,
+                Variant = l.VariantCode,
+                NeededQuantity = (int)l.Quantity
+            }).ToList()
+        };
+        
+        var order = createOrderRequest.ToEntity(_context).Result;
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+        
+        return order;
+    }
+
+    public async Task<int?> LocallyExists(string shipmentNumber)
+    {
+        return await _context.Orders
+            .Where(o => o.TransferShipmentNumber == shipmentNumber)
+            .Select(o => (int?)o.Id)
+            .FirstOrDefaultAsync();
     }
     
     public async Task UpdateOrderStatus(int orderId)
