@@ -356,6 +356,19 @@ namespace MSWMS.Controllers
             
             return id;
         }
+
+        [HttpPost("update-remark/{id}")]
+        [Authorize(Policy = Policies.RequireManagerOrDispatcher)]
+        public async Task<ActionResult> UpdateOrderRemark(int id, string remark)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null) return NotFound();
+            
+            order.Remark = remark;
+            await _context.SaveChangesAsync();
+            
+            return Ok();
+        }
         
         // GET: api/Order/shipment-id-exist
         [HttpGet("shipment-id-exists")]
