@@ -83,11 +83,12 @@ public class OrderService
             Type = Order.OrderType.TransferOrder,
             Items = shipment.Lines
                 .Where(l => l.Quantity > 0)
-                .Select(l => new CreateOrderItemRequest
+                .GroupBy(l => new { l.ItemNo, l.VariantCode })
+                .Select(g => new CreateOrderItemRequest
             {
-                ItemNumber = l.ItemNo,
-                Variant = l.VariantCode,
-                NeededQuantity = (int)l.Quantity
+                ItemNumber = g.Key.ItemNo,
+                Variant = g.Key.VariantCode,
+                NeededQuantity = (int)g.Sum(l => l.Quantity)
             }).ToList()
         };
         
@@ -146,12 +147,14 @@ public class OrderService
             UserId = 1,
             Priority = Order.OrderPriority.Medium,
             Type = Order.OrderType.SalesOrder,
-            Items = shipment.Lines.Select(l => new CreateOrderItemRequest
-            {
-                ItemNumber = l.No,
-                Variant = l.VariantCode,
-                NeededQuantity = (int)l.Quantity
-            }).ToList()
+            Items = shipment.Lines
+                .GroupBy(l => new { l.No, l.VariantCode })
+                .Select(g => new CreateOrderItemRequest
+                {
+                    ItemNumber = g.Key.No,
+                    Variant = g.Key.VariantCode,
+                    NeededQuantity = (int)g.Sum(l => l.Quantity)
+                }).ToList()
         };
         
         var order = createOrderRequest.ToEntity(_context).Result;
