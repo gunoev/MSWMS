@@ -32,16 +32,15 @@ namespace MSWMS.Controllers
                 .AsNoTracking()
                 .Where(o => o.Id == orderId)
                 .SelectMany(o => o.Items)
-                .Include(inf => inf.ItemInfo.Take(1))
                 .Select(i => new ItemDto
                 {
                     Id = i.Id,
-                    Barcode = i.ItemInfo.First().Barcode,
-                    Variant = i.ItemInfo.First().Variant,
-                    ItemNumber = i.ItemInfo.First().ItemNumber,
-                    Description = i.ItemInfo.First().Description,
-                    Price = i.ItemInfo.First().Price,
-                    DiscountPrice = i.ItemInfo.First().DiscountPrice,
+                    Barcode = i.ItemInfo.Select(inf => inf.Barcode).FirstOrDefault() ?? string.Empty,
+                    Variant = i.ItemInfo.Select(inf => inf.Variant).FirstOrDefault() ?? string.Empty,
+                    ItemNumber = i.ItemInfo.Select(inf => inf.ItemNumber).FirstOrDefault() ?? string.Empty,
+                    Description = i.ItemInfo.Select(inf => inf.Description).FirstOrDefault() ?? string.Empty,
+                    Price = i.ItemInfo.Select(inf => inf.Price).FirstOrDefault(),
+                    DiscountPrice = i.ItemInfo.Select(inf => inf.DiscountPrice).FirstOrDefault(),
                     Quantity = (uint)i.NeededQuantity,
                     Scanned = (uint)_context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok)),
                     Remaining = i.NeededQuantity - _context.Scans.Count(s => s.Item.Id == i.Id && (s.Status == Scan.ScanStatus.Ok))

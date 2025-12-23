@@ -11,6 +11,7 @@ using MSWMS.Entities;
 using MSWMS.Entities.External;
 using MSWMS.Hubs;
 using MSWMS.Infrastructure;
+using MSWMS.Models;
 using MSWMS.Repositories;
 using MSWMS.Services;
 using MSWMS.Services.Interfaces;
@@ -59,6 +60,9 @@ if (builder.Environment.IsDevelopment())
     
     builder.Services.AddDbContext<ExternalReadOnlyContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("ExternalDb")));
+    
+    builder.Services.AddDbContext<DCXWMSContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DCXDb"), o => o.UseCompatibilityLevel(120)));
 
 }
 else
@@ -68,6 +72,9 @@ else
     
     builder.Services.AddDbContext<ExternalReadOnlyContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("ExternalDb")));
+    
+    builder.Services.AddDbContext<DCXWMSContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DCXDb"), o => o.UseCompatibilityLevel(120)));
 
 }
 

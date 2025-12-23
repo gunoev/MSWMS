@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Entities.External;
+using MSWMS.Infrastructure.Helpers;
+using MSWMS.Models;
 using MSWMS.Models.Requests;
 using MSWMS.Repositories;
 
@@ -11,12 +13,14 @@ public class OrderService
     private IOrderRepository _orderRepository;
     private readonly AppDbContext _context;
     private readonly ExternalReadOnlyContext _externalContext;
+    private readonly DCXWMSContext _dcxContext;
     
-    public OrderService(IOrderRepository orderRepository, AppDbContext context, ExternalReadOnlyContext externalContext)
+    public OrderService(IOrderRepository orderRepository, AppDbContext context, ExternalReadOnlyContext externalContext, DCXWMSContext dcxContext)
     {
         _orderRepository = orderRepository;
         _context = context;
         _externalContext = externalContext;
+        _dcxContext = dcxContext;
     }
     
     public async Task<Order?> GetByIdAsync(int id)
@@ -24,7 +28,7 @@ public class OrderService
         return await _orderRepository.GetByIdAsync(id);
     }
 
-    public async Task<Order?> CreateOrder(string shipmentNumber)
+    public async Task<Order?> CreateOrder(string shipmentNumber, string shippingId = "")
     {
         Order? order = null;
             
@@ -34,13 +38,13 @@ public class OrderService
         }
         else if (shipmentNumber.Contains("TS"))
         {
-            order = await CreateTransferOrder(shipmentNumber);
+            order = await CreateTransferOrder(shipmentNumber, shippingId);
         }
 
         return order;
     }
 
-    private async Task<Order?> CreateTransferOrder(string shipmentNumber)
+    private async Task<Order?> CreateTransferOrder(string shipmentNumber, string shippingId = "")
     {
         var shipment =
             await _externalContext.MikesportCoSALTransferShipmentHeader
@@ -73,7 +77,7 @@ public class OrderService
         
         var createOrderRequest = new CreateOrderRequest
         {
-            ShipmentId = shipment.No,
+            ShipmentId = string.IsNullOrEmpty(shippingId) ? shipment.No : shippingId,
             TransferOrderNumber = shipment.TransferOrderNo,
             TransferShipmentNumber = shipment.No,
             OriginId = _context.Locations.FirstOrDefault(l => l.Code == shipment.TransferFromCode)?.Id ?? 1,
@@ -92,7 +96,7 @@ public class OrderService
             }).ToList()
         };
         
-        var order = createOrderRequest.ToEntity(_context).Result;
+        var order = createOrderRequest.ToEntity(_context, _dcxContext).Result;
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
         
@@ -157,7 +161,7 @@ public class OrderService
                 }).ToList()
         };
         
-        var order = createOrderRequest.ToEntity(_context).Result;
+        var order = createOrderRequest.ToEntity(_context, _dcxContext).Result;
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
         
@@ -166,10 +170,16 @@ public class OrderService
 
     public async Task<int?> LocallyExists(string shipmentNumber)
     {
+        
         return await _context.Orders
             .Where(o => o.TransferShipmentNumber == shipmentNumber)
             .Select(o => (int?)o.Id)
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<string> GetShipmentNumberByShippingId(string shippingId)
+    {
+        return await OrderExcelParser.GetShipmentNumber(Path.Combine("\\\\navsrv\\01-Posted Docs\\TS LIST", shippingId) + ".xlsx");
     }
     
     public async Task UpdateOrderStatus(int orderId)

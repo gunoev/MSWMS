@@ -391,8 +391,4 @@
       <_ContentIncludedByDefault Remove="wwwroot\_app\version.json" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Entities\External\" />
-    </ItemGroup>
-
 </Project>

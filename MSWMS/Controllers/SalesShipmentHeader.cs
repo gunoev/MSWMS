@@ -22,7 +22,7 @@ namespace MSWMS.Controllers
 
         // GET: api/SalesShipmentHeader
         [HttpGet("page={page}")]
-        public async Task<ActionResult<IEnumerable<object>>> GetMikesportCoSALSalesShipmentHeader(int page = 1)
+        public async Task<ActionResult<IEnumerable<object>>> GetMikesportCoSALSalesShipmentHeader(int page = 1, string shipToName = "")
         {
             return await _context.MikesportCoSALSalesShipmentHeader
                 .AsSplitQuery()
@@ -44,7 +44,8 @@ namespace MSWMS.Controllers
                     UserId = ss.UserId,
                 })
                 .Where(ss => ss.OrderDate >= DateTime.Now.AddMonths(-1) && 
-                             ss.LocationCode == "W01")
+                             ss.LocationCode == "W01" &&
+                             (string.IsNullOrEmpty(shipToName) || ss.ShipToName.ToLower().Contains(shipToName.ToLower())))
                 .OrderByDescending(ss => ss.PostingDate)
                 .Skip((page - 1) * 10)
                 .Take(10)

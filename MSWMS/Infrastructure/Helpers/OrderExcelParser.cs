@@ -28,6 +28,14 @@ public class OrderExcelParser
 
     }
 
+    public static async Task<string> GetShipmentNumber(string filePath)
+    {
+        using var workbook = new XLWorkbook(filePath);
+        var worksheet = workbook.Worksheet(1);
+        
+        return worksheet.Cell("J37").GetString();
+    } 
+
     private async Task<List<ExcelParsedItem>> ParseItems(IXLWorksheet worksheet)
     {
         var rows = worksheet.Rows().Skip(55).ToList();

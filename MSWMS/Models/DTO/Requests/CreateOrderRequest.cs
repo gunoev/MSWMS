@@ -16,7 +16,7 @@ public class CreateOrderRequest
     public string? Remark { get; set; }
     public required ICollection<CreateOrderItemRequest> Items { get; set; }
 
-    public async Task<Order> ToEntity(AppDbContext context)
+    public async Task<Order> ToEntity(AppDbContext context, DCXWMSContext dcxContext)
     {
         var origin = await context.Locations.FindAsync(OriginId);
         var destination = await context.Locations.FindAsync(DestinationId);
@@ -50,6 +50,58 @@ public class CreateOrderRequest
                 ItemInfo = info
             };
         }).ToList();
+
+        // Find items without ItemInfo
+        var itemsWithoutInfo = items
+            .Select((item, index) => new { item, index })
+            .Where(x => x.item.ItemInfo == null || x.item.ItemInfo.Count == 0)
+            .ToList();
+
+        if (itemsWithoutInfo.Any())
+        {
+            var missingPairs = itemsWithoutInfo
+                .Select(x => new { x.item, Request = Items.ElementAt(x.index) })
+                .Select(x => new { x.Request.ItemNumber, x.Request.Variant })
+                .ToList();
+
+            var missingItemNumbers = missingPairs.Select(p => p.ItemNumber).Distinct().ToList();
+            var missingVariants = missingPairs.Select(p => p.Variant).Distinct().ToList();
+
+            var crossReferences = await dcxContext.DcxMsItemCrossReference
+                .Where(cr => missingItemNumbers.Contains(cr.ItemNo) 
+                             && (cr.VariantCode == "" || missingVariants.Contains(cr.VariantCode)))
+                .ToListAsync();
+
+            foreach (var entry in itemsWithoutInfo)
+            {
+                var itemWithoutInfo = entry.item;
+                var request = Items.ElementAt(entry.index);
+
+
+                var crossRef = crossReferences
+                    .FirstOrDefault(cr => cr.ItemNo == request.ItemNumber 
+                                         && cr.VariantCode == request.Variant);
+
+                if (crossRef != null)
+                {
+                    var newItemInfo = new ItemInfo
+                    {
+                        Barcode = crossRef.CrossReferenceNo,
+                        ItemNumber = crossRef.ItemNo,
+                        Variant = string.IsNullOrEmpty(crossRef.VariantCode) ? null : crossRef.VariantCode,
+                        Description = crossRef.Description,
+                        Price = 0
+                    };
+
+                    context.ItemInfos.Add(newItemInfo);
+                    await context.SaveChangesAsync();
+
+                    itemWithoutInfo.ItemInfo = new List<ItemInfo> { newItemInfo };
+                }
+            }
+        }
+        
+        
 
         return new Order
         {

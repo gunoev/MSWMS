@@ -22,7 +22,7 @@ namespace MSWMS.Controllers
 
         // GET: api/TransferShipmentHeader
         [HttpGet("page={page}")]
-        public async Task<ActionResult<IEnumerable<object>>> GetMikesportCoSALTransferShipmentHeader(int page = 1)
+        public async Task<ActionResult<IEnumerable<object>>> GetMikesportCoSALTransferShipmentHeader(int page = 1, string transferToName = "")
         {
             var result = await _context.MikesportCoSALTransferShipmentHeader
                 .AsSplitQuery()
@@ -41,7 +41,8 @@ namespace MSWMS.Controllers
                 ExternalDocumentNo = tsh.ExternalDocumentNo
             })
                 .Where(tsh => tsh.TransferOrderDate >= DateTime.Now.AddMonths(-1)
-                && tsh.TransferFromCode == "W01")
+                && tsh.TransferFromCode == "W01"
+                && (string.IsNullOrEmpty(transferToName) || tsh.TransferToName.Contains(transferToName)))
                 .OrderByDescending(tsh => tsh.PostingDate)
                 .Skip((page - 1) * 10)
             .Take(10)

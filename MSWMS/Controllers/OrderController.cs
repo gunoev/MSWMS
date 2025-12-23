@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Infrastructure.Authorization;
 using MSWMS.Infrastructure.Helpers;
+using MSWMS.Models;
 using MSWMS.Models.Requests;
 using MSWMS.Models.Responses;
 using MSWMS.Services;
@@ -19,12 +20,14 @@ namespace MSWMS.Controllers
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
         private readonly OrderService _orderService;
+        private readonly DCXWMSContext _dcxContext;
 
-        public OrderController(AppDbContext context, IMapper mapper, OrderService orderService)
+        public OrderController(AppDbContext context, IMapper mapper, OrderService orderService, DCXWMSContext dcxContext)
         {
             _context = context;
             _mapper = mapper;
             _orderService = orderService;
+            _dcxContext = dcxContext;
         }
 
         // GET: api/Order
@@ -215,7 +218,7 @@ namespace MSWMS.Controllers
 
             orderRequest.UserId = order.CreatedBy.Id;
 
-            var newOrderState = await orderRequest.ToEntity(_context);
+            var newOrderState = await orderRequest.ToEntity(_context, _dcxContext);
 
             order.ShipmentId = newOrderState.ShipmentId;
             order.TransferOrderNumber = newOrderState.TransferOrderNumber;
@@ -306,7 +309,7 @@ namespace MSWMS.Controllers
             var user = _context.Users.FirstOrDefault(u => u.Username == User.Identity.Name);
             orderRequest.UserId = user.Id;
 
-            var order = orderRequest.ToEntity(_context).Result;
+            var order = orderRequest.ToEntity(_context, _dcxContext).Result;
             
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
@@ -343,17 +346,23 @@ namespace MSWMS.Controllers
         [Authorize(Policy = Policies.RequirePicker)]
         public async Task<ActionResult<int>> GetOrderId(string no)
         {
-            var id = await _orderService.LocallyExists(no);
+            var dbNo = "";
             
-            if (id is null)
+            if (no.StartsWith("db-", StringComparison.CurrentCultureIgnoreCase))
             {
-                var order = await _orderService.CreateOrder(no);
-                
-                if (order is null) return NotFound();
-                
-                id = order.Id;
+                dbNo = no;
+                no = await _orderService.GetShipmentNumberByShippingId(no);
             }
+            var id = await _orderService.LocallyExists(no);
+
+            if (id is not null) return id;
             
+            var order = await _orderService.CreateOrder(no, dbNo);
+                
+            if (order is null) return NotFound();
+                
+            id = order.Id;
+
             return id;
         }
 
