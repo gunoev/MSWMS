@@ -31,6 +31,7 @@ public class ScanService : IScanService
         var item = await GetItemByBarcodeAndOrder(request.Barcode, request.OrderId);
         Console.WriteLine($"Time to get item: {DateTime.Now - startTime}");
         var order = await _context.Orders
+            .AsSplitQuery()
             .Include(o => o.Boxes)
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == request.OrderId);//await _orderService.GetByIdAsync(request.OrderId);
