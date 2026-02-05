@@ -351,7 +351,11 @@ namespace MSWMS.Controllers
             if (no.StartsWith("db-", StringComparison.CurrentCultureIgnoreCase))
             {
                 dbNo = no;
-                no = await _orderService.GetShipmentNumberByShippingId(no);
+                var tsNo = await _orderService.GetShipmentNumberByShippingId(no);
+                
+                if (tsNo is null) { return NotFound();}
+                
+                no = tsNo;
             }
             var id = await _orderService.LocallyExists(no);
 

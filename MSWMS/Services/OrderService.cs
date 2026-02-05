@@ -177,9 +177,16 @@ public class OrderService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<string> GetShipmentNumberByShippingId(string shippingId)
+    public async Task<string?> GetShipmentNumberByShippingId(string shippingId)
     {
-        return await OrderExcelParser.GetShipmentNumber(Path.Combine("\\\\navsrv\\01-Posted Docs\\TS LIST", shippingId) + ".xlsx");
+        try
+        {
+            return await OrderExcelParser.GetShipmentNumber(Path.Combine("\\\\navsrv\\01-Posted Docs\\TS LIST", shippingId) + ".xlsx");
+        }
+        catch
+        {
+            return null;
+        }
     }
     
     public async Task UpdateOrderStatus(int orderId)
