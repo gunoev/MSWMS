@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using MSWMS.Models;
+using MSWMS.TempModels;
 
 namespace MSWMS.Entities.External;
 
@@ -42,6 +44,10 @@ public partial class ExternalReadOnlyContext : DbContext
     public virtual DbSet<MikesportCoSALTransferShipmentHeader> MikesportCoSALTransferShipmentHeader { get; set; }
 
     public virtual DbSet<MikesportCoSALTransferShipmentLine> MikesportCoSALTransferShipmentLine { get; set; }
+    
+    public virtual DbSet<MikesportCoSALSalesPrice> MikesportCoSALSalesPrices { get; set; }
+    
+    public virtual DbSet<MikesportCoSALDefaultSalesPrice> MikesportCoSALDefaultSalesPrices { get; set; }
 
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -2614,6 +2620,102 @@ public partial class ExternalReadOnlyContext : DbContext
                 .HasMaxLength(32)
                 .IsUnicode(false)
                 .HasColumnName("Warranty Period");
+        });
+        
+        modelBuilder.Entity<MikesportCoSALSalesPrice>(entity =>
+        {
+            entity.HasKey(e => new { e.ItemNo, e.SalesType, e.SalesCode, e.StartingDate, e.CurrencyCode, e.VariantCode, e.UnitOfMeasureCode, e.MinimumQuantity }).HasName("Mikesport & Co_ S_A_L_$Sales Price$0");
+
+            entity.ToTable("Mikesport & Co_ S_A_L_$Sales Price");
+
+            entity.HasIndex(e => new { e.SalesType, e.SalesCode, e.ItemNo, e.StartingDate, e.CurrencyCode, e.VariantCode, e.UnitOfMeasureCode, e.MinimumQuantity }, "$1").IsUnique();
+
+            entity.Property(e => e.ItemNo)
+                .HasMaxLength(20)
+                .HasColumnName("Item No_");
+            entity.Property(e => e.SalesType).HasColumnName("Sales Type");
+            entity.Property(e => e.SalesCode)
+                .HasMaxLength(20)
+                .HasColumnName("Sales Code");
+            entity.Property(e => e.StartingDate)
+                .HasColumnType("datetime")
+                .HasColumnName("Starting Date");
+            entity.Property(e => e.CurrencyCode)
+                .HasMaxLength(10)
+                .HasColumnName("Currency Code");
+            entity.Property(e => e.VariantCode)
+                .HasMaxLength(10)
+                .HasColumnName("Variant Code");
+            entity.Property(e => e.UnitOfMeasureCode)
+                .HasMaxLength(10)
+                .HasColumnName("Unit of Measure Code");
+            entity.Property(e => e.MinimumQuantity)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Minimum Quantity");
+            entity.Property(e => e.AllowInvoiceDisc).HasColumnName("Allow Invoice Disc_");
+            entity.Property(e => e.AllowLineDisc).HasColumnName("Allow Line Disc_");
+            entity.Property(e => e.EndingDate)
+                .HasColumnType("datetime")
+                .HasColumnName("Ending Date");
+            entity.Property(e => e.Markup)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Markup _");
+            entity.Property(e => e.PriceIncludesVat).HasColumnName("Price Includes VAT");
+            entity.Property(e => e.Profit)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Profit _");
+            entity.Property(e => e.ProfitLcy)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Profit (LCY)");
+            entity.Property(e => e.Timestamp)
+                .IsRowVersion()
+                .IsConcurrencyToken()
+                .HasColumnName("timestamp");
+            entity.Property(e => e.UnitPrice)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Unit Price");
+            entity.Property(e => e.UnitPriceIncludingVat)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Unit Price Including VAT");
+            entity.Property(e => e.VatBusPostingGrPrice)
+                .HasMaxLength(10)
+                .HasColumnName("VAT Bus_ Posting Gr_ (Price)");
+        });
+        
+        modelBuilder.Entity<MikesportCoSALDefaultSalesPrice>(entity =>
+        {
+            entity.HasKey(e => e.ItemNo).HasName("Mikesport & Co_ S_A_L_$Default Sales Price$0");
+
+            entity.ToTable("Mikesport & Co_ S_A_L_$Default Sales Price");
+
+            entity.Property(e => e.ItemNo)
+                .HasMaxLength(20)
+                .HasColumnName("Item No_");
+            entity.Property(e => e.Currency).HasMaxLength(10);
+            entity.Property(e => e.Description).HasMaxLength(60);
+            entity.Property(e => e.DiscountPercentage)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Discount Percentage");
+            entity.Property(e => e.DiscountedPrice)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Discounted Price");
+            entity.Property(e => e.DiscountedPriceCurrency)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Discounted Price Currency");
+            entity.Property(e => e.ReplicationCounter).HasColumnName("Replication Counter");
+            entity.Property(e => e.Timestamp)
+                .IsRowVersion()
+                .IsConcurrencyToken()
+                .HasColumnName("timestamp");
+            entity.Property(e => e.UnitOfMeasureCode)
+                .HasMaxLength(10)
+                .HasColumnName("Unit of Measure Code");
+            entity.Property(e => e.UnitPriceIncludingVat)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Unit Price Including VAT");
+            entity.Property(e => e.UnitPriceIncludingVatCurre)
+                .HasColumnType("decimal(38, 20)")
+                .HasColumnName("Unit Price Including VAT Curre");
         });
 
         OnModelCreatingPartial(modelBuilder);
