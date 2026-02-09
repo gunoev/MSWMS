@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Entities.External;
 using MSWMS.Infrastructure.Authorization;
 using MSWMS.Infrastructure.Helpers;
 using MSWMS.Models;
@@ -21,13 +22,15 @@ namespace MSWMS.Controllers
         private readonly IMapper _mapper;
         private readonly OrderService _orderService;
         private readonly DCXWMSContext _dcxContext;
+        private readonly ExternalReadOnlyContext _externalContext;
 
-        public OrderController(AppDbContext context, IMapper mapper, OrderService orderService, DCXWMSContext dcxContext)
+        public OrderController(AppDbContext context, IMapper mapper, OrderService orderService, DCXWMSContext dcxContext, ExternalReadOnlyContext externalContext)
         {
             _context = context;
             _mapper = mapper;
             _orderService = orderService;
             _dcxContext = dcxContext;
+            _externalContext = externalContext;
         }
 
         // GET: api/Order
@@ -218,7 +221,7 @@ namespace MSWMS.Controllers
 
             orderRequest.UserId = order.CreatedBy.Id;
 
-            var newOrderState = await orderRequest.ToEntity(_context, _dcxContext);
+            var newOrderState = await orderRequest.ToEntity(_context, _dcxContext, _externalContext);
 
             order.ShipmentId = newOrderState.ShipmentId;
             order.TransferOrderNumber = newOrderState.TransferOrderNumber;
@@ -309,7 +312,7 @@ namespace MSWMS.Controllers
             var user = _context.Users.FirstOrDefault(u => u.Username == User.Identity.Name);
             orderRequest.UserId = user.Id;
 
-            var order = orderRequest.ToEntity(_context, _dcxContext).Result;
+            var order = orderRequest.ToEntity(_context, _dcxContext, _externalContext).Result;
             
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
