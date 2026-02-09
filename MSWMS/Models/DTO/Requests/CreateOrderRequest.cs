@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
+using MSWMS.Entities.External;
 
 namespace MSWMS.Models.Requests;
 
@@ -16,7 +17,7 @@ public class CreateOrderRequest
     public string? Remark { get; set; }
     public required ICollection<CreateOrderItemRequest> Items { get; set; }
 
-    public async Task<Order> ToEntity(AppDbContext context, DCXWMSContext dcxContext)
+    public async Task<Order> ToEntity(AppDbContext context, DCXWMSContext dcxContext, ExternalReadOnlyContext externalContext)
     {
         var origin = await context.Locations.FindAsync(OriginId);
         var destination = await context.Locations.FindAsync(DestinationId);
@@ -84,13 +85,22 @@ public class CreateOrderRequest
 
                 if (crossRef != null)
                 {
+                    var salesPrice =
+                        externalContext.MikesportCoSALDefaultSalesPrices
+                            .AsNoTracking()
+                            .FirstOrDefault(sp =>
+                            sp.ItemNo == crossRef.ItemNo);
+                    
                     var newItemInfo = new ItemInfo
                     {
                         Barcode = crossRef.CrossReferenceNo,
                         ItemNumber = crossRef.ItemNo,
                         Variant = string.IsNullOrEmpty(crossRef.VariantCode) ? null : crossRef.VariantCode,
                         Description = crossRef.Description,
-                        Price = 0
+                        Price = salesPrice?.UnitPriceIncludingVatCurre ?? 0,
+                        DiscountPrice = salesPrice?.DiscountedPriceCurrency ?? 0,
+                        Currency = salesPrice?.Currency ?? "",
+                        DiscountPercentage = salesPrice?.DiscountPercentage ?? 0
                     };
 
                     context.ItemInfos.Add(newItemInfo);
