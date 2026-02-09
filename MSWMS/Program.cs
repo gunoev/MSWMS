@@ -11,23 +11,52 @@ using MSWMS.Entities;
 using MSWMS.Entities.External;
 using MSWMS.Hubs;
 using MSWMS.Infrastructure;
+using MSWMS.Jobs;
 using MSWMS.Models;
 using MSWMS.Repositories;
 using MSWMS.Services;
 using MSWMS.Services.Interfaces;
 using Serilog;
 using Serilog.Events;
+using OpenTelemetry.Metrics;
+using Quartz;
+using Serilog.Sinks.Grafana.Loki;
 
 var builder = WebApplication.CreateBuilder(args);
 
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.Console()
-    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning) 
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Hosting.Diagnostics", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Routing.EndpointMiddleware", LogEventLevel.Warning)
+    .Filter.ByExcluding(logEvent =>
+        logEvent.Properties.TryGetValue("RequestPath", out var requestPath) &&
+        requestPath.ToString().Contains("/metrics"))
     .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
 
-builder.Host.UseSerilog();
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .Enrich.FromLogContext()
+    .Filter.ByExcluding(logEvent =>
+        logEvent.Properties.TryGetValue("RequestPath", out var requestPath) &&
+        requestPath.ToString().Contains("/metrics"))
+    .WriteTo.GrafanaLoki("http://localhost:3100",
+        labels: new List<LokiLabel>
+    {
+        new() { Key = "job", Value = "MSWMS" },
+        new() { Key = "service_name", Value = "MSWMS" }
+    }));
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddProcessInstrumentation()
+            .AddPrometheusExporter();
+    });
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -188,6 +217,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<ScanHub>();
 builder.Services.AddScoped<IScanService, ScanService>();
+builder.Services.AddScoped<ISalesPriceUpdater, SalesPriceUpdater>();
 
 // Swagger конфигурация
 builder.Services.AddEndpointsApiExplorer();
@@ -198,6 +228,24 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Добавление пакета BCrypt для хеширования паролей
 builder.Services.AddSingleton<BCrypt.Net.BCrypt>();
 builder.Services.AddSignalR();
+
+builder.Services.AddQuartz(q =>
+{
+    var jobKey = new JobKey(nameof(UpdatePricesJob));
+
+    q.AddJob<UpdatePricesJob>(opts => opts.WithIdentity(jobKey));
+
+    // Каждый день в 07:00 (cron Quartz: секунды минуты часы день-месяц месяц день-недели)
+    q.AddTrigger(opts => opts
+        .ForJob(jobKey)
+        .WithIdentity($"{nameof(UpdatePricesJob)}-trigger")
+        .WithCronSchedule("0 0 7 * * ?"));
+});
+
+builder.Services.AddQuartzHostedService(opts =>
+{
+    opts.WaitForJobsToComplete = true;
+});
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
@@ -226,6 +274,7 @@ builder.Services.AddSingleton(mapper);
 
 var app = builder.Build();
 
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -253,10 +302,13 @@ app.MapHub<ScanHub>("/api/scanhub");
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 //app.Urls.Add("http://0.0.0.0:5262");
 app.Urls.Add("https://0.0.0.0:5262");
+
+app.MapPrometheusScrapingEndpoint();
 
 app.Run();
