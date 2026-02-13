@@ -96,7 +96,7 @@ public class OrderService
             }).ToList()
         };
         
-        var order = createOrderRequest.ToEntity(_context, _dcxContext, _externalContext).Result;
+        var order = await createOrderRequest.ToEntity(_context, _dcxContext, _externalContext);
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
         
@@ -161,7 +161,7 @@ public class OrderService
                 }).ToList()
         };
         
-        var order = createOrderRequest.ToEntity(_context, _dcxContext, _externalContext).Result;
+        var order = await createOrderRequest.ToEntity(_context, _dcxContext, _externalContext);
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
         

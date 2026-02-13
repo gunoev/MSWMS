@@ -312,7 +312,7 @@ namespace MSWMS.Controllers
             var user = _context.Users.FirstOrDefault(u => u.Username == User.Identity.Name);
             orderRequest.UserId = user.Id;
 
-            var order = orderRequest.ToEntity(_context, _dcxContext, _externalContext).Result;
+            var order = await orderRequest.ToEntity(_context, _dcxContext, _externalContext);
             
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();

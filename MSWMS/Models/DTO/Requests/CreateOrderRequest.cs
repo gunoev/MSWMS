@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Entities.External;
+using System.Globalization;
+using System.Text;
 
 namespace MSWMS.Models.Requests;
 
@@ -23,26 +25,45 @@ public class CreateOrderRequest
         var destination = await context.Locations.FindAsync(DestinationId);
         var user = await context.Users.FindAsync(UserId);
 
-        if (origin is null) throw new Exception("Origin location not found");
-        if (destination is null) throw new Exception("Destination location not found");
-        if (user is null) throw new Exception("User not found");
+        if (origin is null) throw new Exception("Order not created. Origin location not found.");
+        if (destination is null) throw new Exception("Order not created. Destination location not found.");
+        if (user is null) throw new Exception("Order not created. User not found");
 
-        var neededPairs = Items
-            .Select(i => new { i.ItemNumber, i.Variant })
+        static string? NormVariant(string? v)
+        {
+            if (string.IsNullOrWhiteSpace(v)) return null;
+
+            // Убираем невидимые Unicode Format chars (U+202D/U+202C)
+            var cleaned = string.Concat(
+                v.EnumerateRunes()
+                 .Where(r => Rune.GetUnicodeCategory(r) != UnicodeCategory.Format)
+                 .Select(r => r.ToString())
+            );
+
+            cleaned = cleaned.Trim();
+            return cleaned.Length == 0 ? null : cleaned.ToUpperInvariant();
+        }
+
+        var itemsList = Items.ToList();
+
+        var neededPairs = itemsList
+            .Select(i => new { i.ItemNumber, Variant = NormVariant(i.Variant) })
             .ToList();
 
         var itemNumbers = neededPairs.Select(p => p.ItemNumber).Distinct().ToList();
-        var variants = neededPairs.Select(p => p.Variant).Distinct().ToList();
 
         var allInfos = await context.ItemInfos
-            .Where(inf => itemNumbers.Contains(inf.ItemNumber)
-                          && (inf.Variant == null || variants.Contains(inf.Variant))).ToListAsync();
-        
-        
-        var items = Items.Select(req =>
+            .Where(inf => itemNumbers.Contains(inf.ItemNumber))
+            .ToListAsync();
+
+        var items = itemsList.Select(req =>
         {
+            var reqVariant = NormVariant(req.Variant);
+
             var info = allInfos
-                .Where(inf => inf.ItemNumber == req.ItemNumber && inf.Variant == req.Variant)
+                .Where(inf =>
+                    inf.ItemNumber == req.ItemNumber &&
+                    NormVariant(inf.Variant) == reqVariant)
                 .ToList();
 
             return new Item
@@ -52,7 +73,6 @@ public class CreateOrderRequest
             };
         }).ToList();
 
-        // Find items without ItemInfo
         var itemsWithoutInfo = items
             .Select((item, index) => new { item, index })
             .Where(x => x.item.ItemInfo == null || x.item.ItemInfo.Count == 0)
@@ -61,41 +81,61 @@ public class CreateOrderRequest
         if (itemsWithoutInfo.Any())
         {
             var missingPairs = itemsWithoutInfo
-                .Select(x => new { x.item, Request = Items.ElementAt(x.index) })
-                .Select(x => new { x.Request.ItemNumber, x.Request.Variant })
+                .Select(x => new { x.item, Request = itemsList[x.index] })
+                .Select(x => new { x.Request.ItemNumber, Variant = NormVariant(x.Request.Variant) })
                 .ToList();
 
             var missingItemNumbers = missingPairs.Select(p => p.ItemNumber).Distinct().ToList();
-            var missingVariants = missingPairs.Select(p => p.Variant).Distinct().ToList();
-
+            
             var crossReferences = await dcxContext.DcxMsItemCrossReference
-                .Where(cr => missingItemNumbers.Contains(cr.ItemNo) 
-                             && (cr.VariantCode == "" || missingVariants.Contains(cr.VariantCode)))
+                .Where(cr => missingItemNumbers.Contains(cr.ItemNo))
                 .ToListAsync();
+
+            var crossRefItemNos = crossReferences
+                .Select(cr => cr.ItemNo)
+                .Distinct()
+                .ToList();
+
+            var salesPrices = await externalContext.MikesportCoSALDefaultSalesPrices
+                .AsNoTracking()
+                .Where(sp => crossRefItemNos.Contains(sp.ItemNo))
+                .ToListAsync();
+
+            var salesPriceByItemNo = salesPrices
+                .GroupBy(sp => sp.ItemNo)
+                .ToDictionary(g => g.Key, g => g.FirstOrDefault());
 
             foreach (var entry in itemsWithoutInfo)
             {
                 var itemWithoutInfo = entry.item;
-                var request = Items.ElementAt(entry.index);
+                var request = itemsList[entry.index];
 
+                var reqVariant = NormVariant(request.Variant);
 
-                var crossRef = crossReferences
-                    .FirstOrDefault(cr => cr.ItemNo == request.ItemNumber 
-                                         && cr.VariantCode == request.Variant);
+                // ВАЖНО: берём ВСЕ совпадения, а не FirstOrDefault
+                var crossRefs = crossReferences
+                    .Where(cr =>
+                        cr.ItemNo == request.ItemNumber &&
+                        NormVariant(cr.VariantCode) == reqVariant)
+                    .ToList();
 
-                if (crossRef != null)
+                if (crossRefs.Count == 0)
                 {
-                    var salesPrice =
-                        externalContext.MikesportCoSALDefaultSalesPrices
-                            .AsNoTracking()
-                            .FirstOrDefault(sp =>
-                            sp.ItemNo == crossRef.ItemNo);
-                    
+                    throw new Exception(
+                        $"Order not created. No item info found for itemNumber='{request.ItemNumber}', variant='{request.Variant}'.");
+                }
+
+                var newInfos = new List<ItemInfo>(capacity: crossRefs.Count);
+
+                foreach (var crossRef in crossRefs)
+                {
+                    salesPriceByItemNo.TryGetValue(crossRef.ItemNo, out var salesPrice);
+
                     var newItemInfo = new ItemInfo
                     {
                         Barcode = crossRef.CrossReferenceNo,
                         ItemNumber = crossRef.ItemNo,
-                        Variant = string.IsNullOrEmpty(crossRef.VariantCode) ? null : crossRef.VariantCode,
+                        Variant = NormVariant(crossRef.VariantCode),
                         Description = crossRef.Description,
                         Price = salesPrice?.UnitPriceIncludingVatCurre ?? 0,
                         DiscountPrice = salesPrice?.DiscountedPriceCurrency ?? 0,
@@ -104,14 +144,14 @@ public class CreateOrderRequest
                     };
 
                     context.ItemInfos.Add(newItemInfo);
-                    await context.SaveChangesAsync();
-
-                    itemWithoutInfo.ItemInfo = new List<ItemInfo> { newItemInfo };
+                    newInfos.Add(newItemInfo);
                 }
+
+                itemWithoutInfo.ItemInfo = newInfos;
             }
+
+            await context.SaveChangesAsync();
         }
-        
-        
 
         return new Order
         {

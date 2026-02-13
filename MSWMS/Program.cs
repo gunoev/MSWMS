@@ -88,7 +88,7 @@ if (builder.Environment.IsDevelopment())
         options.UseSqlServer(connectionString));
     
     builder.Services.AddDbContext<ExternalReadOnlyContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("ExternalDb")));
+        options.UseSqlServer(builder.Configuration.GetConnectionString("ExternalDb"), o => o.UseCompatibilityLevel(120)));
     
     builder.Services.AddDbContext<DCXWMSContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DCXDb"), o => o.UseCompatibilityLevel(120)));
@@ -100,7 +100,7 @@ else
         options.UseSqlServer(connectionString));  
     
     builder.Services.AddDbContext<ExternalReadOnlyContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("ExternalDb")));
+        options.UseSqlServer(builder.Configuration.GetConnectionString("ExternalDb"), o => o.UseCompatibilityLevel(120)));
     
     builder.Services.AddDbContext<DCXWMSContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DCXDb"), o => o.UseCompatibilityLevel(120)));
