@@ -235,11 +235,11 @@ builder.Services.AddQuartz(q =>
 
     q.AddJob<UpdatePricesJob>(opts => opts.WithIdentity(jobKey));
 
-    // Каждый день в 07:00 (cron Quartz: секунды минуты часы день-месяц месяц день-недели)
+    // Каждый день в 08:00 (cron Quartz: секунды минуты часы день-месяц месяц день-недели)
     q.AddTrigger(opts => opts
         .ForJob(jobKey)
         .WithIdentity($"{nameof(UpdatePricesJob)}-trigger")
-        .WithCronSchedule("0 0 7 * * ?"));
+        .WithCronSchedule("0 0 8 * * ?"));
 });
 
 builder.Services.AddQuartzHostedService(opts =>
