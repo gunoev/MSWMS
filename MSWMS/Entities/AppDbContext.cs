@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MSWMS.Entities.Distributions;
 
 namespace MSWMS.Entities;
 
@@ -14,6 +15,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Location> Locations { get; set; }
     public DbSet<Shipment> Shipments { get; set; }
     public DbSet<ShipmentEvent> ShipmentEvents { get; set; }
+    public DbSet<Distribution> Distributions { get; set; }
+    public DbSet<DistributionDocument> DistributionDocuments { get; set; }
+    public DbSet<DistributionScan> DistributionScans { get; set; }
+    public DbSet<DistributionItem> DistributionItems { get; set; }
 
     /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -180,7 +185,102 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(b => b.User)
             .WithMany()
             .OnDelete(DeleteBehavior.Restrict);
+        
+        // DISTRIBUTION
+        modelBuilder.Entity<Distribution>()
+            .HasMany(d => d.Documents)
+            .WithOne(d => d.Distribution)
+            .HasForeignKey(d => d.DistributionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<Distribution>()
+            .HasMany(d => d.Scans)
+            .WithOne(d => d.Distribution)
+            .HasForeignKey(d => d.DistributionId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<Distribution>()
+            .HasIndex(d => d.Date);
+        
+        // DISTRIBUTION DOCUMENTS
+        modelBuilder.Entity<DistributionDocument>()
+            .HasMany(dd => dd.Items)
+            .WithOne(di => di.Document)
+            .HasForeignKey(di => di.DocumentId)
+            .OnDelete(DeleteBehavior.Cascade);
 
+        modelBuilder.Entity<DistributionDocument>()
+            .HasOne(d => d.Origin)
+            .WithMany()
+            .HasForeignKey(d => d.OriginId)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        modelBuilder.Entity<DistributionDocument>()
+            .HasOne(d => d.Destination)
+            .WithMany()
+            .HasForeignKey(d => d.DestinationId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<DistributionDocument>()
+            .HasIndex(d => d.DocumentNumber);
+        
+        modelBuilder.Entity<DistributionDocument>()
+            .HasIndex(d => d.OrderNumber);
+        
+        // DISTRIBUTION ITEMS
+        modelBuilder.Entity<DistributionItem>()
+            .HasOne(di => di.Document)
+            .WithMany(dd => dd.Items)
+            .HasForeignKey(di => di.DocumentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DistributionItem>()
+            .HasOne(di => di.Destination);
+
+        modelBuilder.Entity<DistributionItem>()
+            .HasIndex(d => d.BinCode);
+
+        modelBuilder.Entity<DistributionItem>()
+            .HasIndex(d => d.LotNumber);
+        
+        modelBuilder.Entity<DistributionItem>()
+            .HasIndex(d => new { d.ItemNumber, d.Variant });
+
+        modelBuilder.Entity<DistributionScan>()
+            .HasOne(di => di.User)
+            .WithMany()
+            .HasForeignKey(ds => ds.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<DistributionScan>()
+            .HasOne(ds => ds.Origin)
+            .WithMany()
+            .HasForeignKey(ds => ds.OriginId)
+            .OnDelete(DeleteBehavior.NoAction);
+        
+        modelBuilder.Entity<DistributionScan>()
+            .HasOne(ds => ds.Document)
+            .WithMany()
+            .HasForeignKey(ds => ds.DocumentId);
+        
+        modelBuilder.Entity<DistributionScan>()
+            .HasOne(ds => ds.Item)
+            .WithMany()
+            .HasForeignKey(ds => ds.ItemId);
+        
+        modelBuilder.Entity<DistributionScan>()
+            .HasIndex(ds => ds.TimeStamp);
+        
+        modelBuilder.Entity<DistributionScan>()
+            .HasIndex(ds => ds.Barcode);
+        
+        modelBuilder.Entity<DistributionScan>()
+            .HasIndex(ds => ds.LotNumber);
+        
+        modelBuilder.Entity<DistributionScan>()
+            .HasIndex(ds => ds.BinCode);
     }
 
 }
+
+//    dotnet ef dbcontext scaffold "Server=192.168.51.13;Database=DCX-MS;User Id=pickapp;Password=pickapp123;TrustServerCertificate=True" Microsoft.EntityFrameworkCore.SqlServer --table "DCX-MS$Warehouse Activity Header" --table "DCX-MS$Warehouse Activity Line" --table "DCX-MS$Transfer Header" --table "DCX-MS$Sales Header" --output-dir TempModels --context TempContext --force
