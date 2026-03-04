@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MSWMS.Entities.Distributions;
 
-public class DistributionScan
+public class DistributionScan : BaseEntity
 {
     [MaxLength(100)]
     public required string Barcode { get; set; }
