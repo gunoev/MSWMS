@@ -282,5 +282,3 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     }
 
 }
-
-//    dotnet ef dbcontext scaffold "Server=192.168.51.13;Database=DCX-MS;User Id=pickapp;Password=pickapp123;TrustServerCertificate=True" Microsoft.EntityFrameworkCore.SqlServer --table "DCX-MS$Warehouse Activity Header" --table "DCX-MS$Warehouse Activity Line" --table "DCX-MS$Transfer Header" --table "DCX-MS$Sales Header" --output-dir TempModels --context TempContext --force
