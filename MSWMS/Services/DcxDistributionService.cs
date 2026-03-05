@@ -1,6 +1,7 @@
 using MSWMS.Models.DTO.Soap.Responses;
 using MSWMS.Repositories;
 using MSWMS.Services.Soap;
+using MSWMS.TempModels;
 
 namespace MSWMS.Services;
 
@@ -18,10 +19,17 @@ public class DcxDistributionService
         _soapService = soapService;
     }
 
-    public async Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeaders(string locationCode)
+    public async Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeadersAsync(string locationCode)
     {
         var headers = await _soapService.GetDirectedPickHeaders(locationCode);
         
         return headers;
+    }
+
+    public async Task<List<DcxMsWarehouseActivityLine>> GetDirectedPickLinesAsync(string documentNumber)
+    {
+        var lines = await _dcxDistributionRepository.GetLinesByDocumentNumber(documentNumber);
+        
+        return lines;
     }
 }
