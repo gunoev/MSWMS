@@ -19,7 +19,7 @@ public class DcxSoapService
         return client;
     }
 
-    public async Task<DirectedPickGetHeadersResult> GetDirectedPickHeaders(string locationCode)
+    public async Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeaders(string locationCode)
     {
         var client = CreateClient();
         
@@ -27,7 +27,7 @@ public class DcxSoapService
         {
             var result = await client.DirectedPickGetHeadersAsync(locationCode);
             
-            var headers = JsonParser.Parse<DirectedPickGetHeadersResult>(result);
+            var headers = JsonParser.Parse<List<DirectedPickGetHeadersResult>>(result);
             
             return headers;
         }
