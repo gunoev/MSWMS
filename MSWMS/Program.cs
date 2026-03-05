@@ -213,6 +213,8 @@ builder.Services.AddAuthorization(options =>
 
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<DistributionRepository>();
+builder.Services.AddScoped<IDistributionService, DistributionService>();
 builder.Services.AddScoped<BoxService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OrderService>();
