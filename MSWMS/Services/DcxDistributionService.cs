@@ -11,12 +11,12 @@ namespace MSWMS.Services;
 public class DcxDistributionService
 {
     private readonly IDcxDistributionRepository _dcxDistributionRepository;
-    private readonly DcxSoapService _soapService;
+    private readonly IDcxSoapService _soapService;
     private readonly ILocationRepository _locationRepository;
     
     public DcxDistributionService(
         IDcxDistributionRepository dcxDistributionRepository, 
-        DcxSoapService soapService,
+        IDcxSoapService soapService,
         ILocationRepository locationRepository
         )
     {
