@@ -1,6 +1,8 @@
 using MSWMS.Entities.Distributions;
 using MSWMS.Models.DTO.Soap.Responses;
 using MSWMS.Repositories;
+using MSWMS.Repositories.Interfaces;
+using MSWMS.Services.Interfaces;
 using MSWMS.Services.Soap;
 using MSWMS.TempModels;
 
@@ -8,12 +10,12 @@ namespace MSWMS.Services;
 
 public class DcxDistributionService
 {
-    private readonly DcxDistributionRepository _dcxDistributionRepository;
+    private readonly IDcxDistributionRepository _dcxDistributionRepository;
     private readonly DcxSoapService _soapService;
     private readonly LocationRepository _locationRepository;
     
     public DcxDistributionService(
-        DcxDistributionRepository dcxDistributionRepository, 
+        IDcxDistributionRepository dcxDistributionRepository, 
         DcxSoapService soapService,
         LocationRepository locationRepository
         )
@@ -74,7 +76,7 @@ public class DcxDistributionService
     {
         if (orderNumber.Contains("SO"))
         {
-            throw new NotImplementedException("SO order numbers are not supported for distribution");
+            return await _dcxDistributionRepository.GetSalesDestinationLocationCode(orderNumber);
         }
         return await _dcxDistributionRepository.GetTransferDestinationLocationCode(orderNumber);
     }
