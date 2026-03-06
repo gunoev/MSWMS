@@ -1,10 +1,11 @@
 using System.Data.Entity;
 using MSWMS.Models;
+using MSWMS.Repositories.Interfaces;
 using MSWMS.TempModels;
 
 namespace MSWMS.Repositories;
 
-public class DcxDistributionRepository
+public class DcxDistributionRepository : IDcxDistributionRepository
 {
     private readonly DCXWMSContext _context;
 
@@ -35,6 +36,6 @@ public class DcxDistributionRepository
     
     public Task<string> GetSalesDestinationLocationCode(string documentNumber)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("SO order numbers are not supported for distribution");
     }
 }
