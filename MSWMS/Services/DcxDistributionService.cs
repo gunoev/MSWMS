@@ -12,12 +12,12 @@ public class DcxDistributionService
 {
     private readonly IDcxDistributionRepository _dcxDistributionRepository;
     private readonly DcxSoapService _soapService;
-    private readonly LocationRepository _locationRepository;
+    private readonly ILocationRepository _locationRepository;
     
     public DcxDistributionService(
         IDcxDistributionRepository dcxDistributionRepository, 
         DcxSoapService soapService,
-        LocationRepository locationRepository
+        ILocationRepository locationRepository
         )
     {
         _dcxDistributionRepository = dcxDistributionRepository;
