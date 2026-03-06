@@ -2,10 +2,11 @@ using System.Data.Entity;
 using MSWMS.Entities;
 using MSWMS.Entities.Distributions;
 using MSWMS.Interfaces;
+using MSWMS.Repositories.Interfaces;
 
 namespace MSWMS.Repositories;
 
-public class DistributionRepository : IAsyncRepository<Distribution>
+public class DistributionRepository : IDistributionRepository
 {
     private readonly AppDbContext _context;
 
