@@ -30,13 +30,26 @@
     - отправление scan dto клиентам
     
 - Controllers
-    - DistributionDocumentsController
-        - GET /api/Distribution/{id}/documents
-        - POST /api/Distribution/{id}/documents
-        - DELETE /api/Distribution/{id}/documents/{docId}
-        - PATCH /api/Distribution/{id}/documents/{docId}
+    - DistributionController
+        - POST /api/distributions/
+        - GET /api/distributions/{id}
+        - DELETE /api/distributions/{id}
+        - PATCH /api/distributions/{id}/note
+        
+        - POST /api/distributions/{id}/documents request (List<string> number of documents)
+        - GET /api/distributions/{id}/documents
+        - GET /api/distributions/{id}/documents/{docId}
+        - GET /api/distributions/{id}/documents/items
+        - GET /api/distributions/{id}/documents/{docId}/items
+        - GET /api/distributions/{id}/documents/{docId}/items/{itemId}
+        - DELETE /api/distributions/{id}/documents/{docId}
+        - PATCH /api/distributions/{id}/documents/{docId}
+        
+        - GET /api/distributions/{id}/scans
+        - GET /api/distributions/{id}/scans/{scanId}
+        - POST /api/distributions/{id}/scans
+        - DELETE /api/distributions/{id}/scans/{scanId}
    
-    - ScanController
     
     
     
