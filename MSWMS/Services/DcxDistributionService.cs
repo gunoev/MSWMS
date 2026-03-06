@@ -72,6 +72,10 @@ public class DcxDistributionService
 
     private async Task<string> GetLocationCodeByOrderNumber(string orderNumber)
     {
+        if (orderNumber.Contains("SO"))
+        {
+            throw new NotImplementedException("SO order numbers are not supported for distribution");
+        }
         return await _dcxDistributionRepository.GetTransferDestinationLocationCode(orderNumber);
     }
 }
