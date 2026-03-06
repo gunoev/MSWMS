@@ -2,10 +2,11 @@ using System.ServiceModel;
 using MSWMS.Infrastructure.Helpers;
 using MSWMS.Models.DTO.Soap.Responses;
 using MSWMS.NAVService;
+using MSWMS.Services.Interfaces;
 
 namespace MSWMS.Services.Soap;
 
-public class DcxSoapService 
+public class DcxSoapService : IDcxSoapService
 {
     private NAVServiceClient CreateClient()
     {
