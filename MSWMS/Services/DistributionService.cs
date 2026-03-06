@@ -1,20 +1,19 @@
-using Microsoft.EntityFrameworkCore;
-using MSWMS.Entities;
 using MSWMS.Entities.Distributions;
-using MSWMS.Repositories;
+using MSWMS.Repositories.Interfaces;
 using MSWMS.Services.Interfaces;
 
 namespace MSWMS.Services;
 
 public class DistributionService : IDistributionService
 {
-    private readonly DistributionRepository _distributionRepository;
-    private readonly AppDbContext _context;
+    private readonly IDistributionRepository _distributionRepository;
+    private readonly ILocationRepository _locationRepository;
 
-    public DistributionService(DistributionRepository distributionRepository, AppDbContext context)
+    public DistributionService(IDistributionRepository distributionRepository, ILocationRepository locationRepository)
     {
         _distributionRepository = distributionRepository;
-        _context = context;
+        _locationRepository = locationRepository;
+        
     }
 
     public Task<Distribution?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -67,15 +66,16 @@ public class DistributionService : IDistributionService
         int destinationId,
         CancellationToken cancellationToken = default)
     {
-        var distribution = await _context.Distributions
-            .FirstOrDefaultAsync(d => d.Id == distributionId, cancellationToken);
+        var distribution = await _distributionRepository.GetByIdAsync(distributionId, cancellationToken);
+        
         if (distribution is null)
         {
             return null;
         }
 
-        var origin = await _context.Locations.FirstOrDefaultAsync(l => l.Id == originId, cancellationToken);
-        var destination = await _context.Locations.FirstOrDefaultAsync(l => l.Id == destinationId, cancellationToken);
+        var origin = await _locationRepository.GetByIdAsync(originId, cancellationToken);
+        var destination = await _locationRepository.GetByIdAsync(destinationId, cancellationToken);
+        
         if (origin is null || destination is null)
         {
             return null;
