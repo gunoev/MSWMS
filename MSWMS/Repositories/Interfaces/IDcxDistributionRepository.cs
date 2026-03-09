@@ -1,3 +1,4 @@
+using MSWMS.Models;
 using MSWMS.TempModels;
 
 namespace MSWMS.Repositories.Interfaces;
@@ -10,4 +11,6 @@ public interface IDcxDistributionRepository
     Task<string> GetTransferDestinationLocationCode(string documentNumber, CancellationToken cancellationToken = default);
 
     Task<string> GetSalesDestinationLocationCode(string documentNumber);
+
+    Task<DcxMsItemCrossReference> GetItemCrossReference(string barcode);
 }
