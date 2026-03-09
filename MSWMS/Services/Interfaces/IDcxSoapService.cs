@@ -4,5 +4,5 @@ namespace MSWMS.Services.Interfaces;
 
 public interface IDcxSoapService
 {
-    Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeaders(string locationCode);
+    Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeadersAsync(string locationCode);
 }
