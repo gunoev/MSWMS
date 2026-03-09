@@ -48,4 +48,9 @@ public class DistributionRepository : IDistributionRepository
         }
     }
     
+    public async Task<ICollection<Distribution>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate)
+    {
+        return await _context.Distributions.Where(d => d.Date >= startDate && d.Date <= endDate).ToListAsync();
+    }
+    
 }
