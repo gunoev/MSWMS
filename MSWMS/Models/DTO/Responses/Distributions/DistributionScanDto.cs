@@ -10,7 +10,7 @@ public class DistributionScanDto
     public string LotNumber { get; set; } = string.Empty;
     public ScanType ScanType { get; set; }
     public DateTime TimeStamp { get; set; }
-    public ScanStatus Status { get; set; }
+    public DistributionScanStatus Status { get; set; }
     public int UserId { get; set; }
     public int OriginId { get; set; }
     public int DistributionId { get; set; }
