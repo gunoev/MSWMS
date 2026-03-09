@@ -18,9 +18,9 @@ public class DistributionDocument : BaseEntity
     
     public int DistributionId { get; set; }
     
-    public required Location Origin { get; set; }
+    public Location? Origin { get; set; }
     
-    public required Location Destination { get; set; }
-    
-    public required Distribution Distribution { get; set; }
+    public Location? Destination { get; set; }
+
+    public Distribution? Distribution { get; set; }
 }
