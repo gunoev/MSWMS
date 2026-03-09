@@ -8,15 +8,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using MSWMS.Entities;
+using MSWMS.Entities.Distributions;
 using MSWMS.Entities.External;
 using MSWMS.Hubs;
 using MSWMS.Infrastructure;
+using MSWMS.Interfaces;
 using MSWMS.Jobs;
 using MSWMS.Models;
 using MSWMS.Repositories;
 using MSWMS.Repositories.Interfaces;
 using MSWMS.Services;
 using MSWMS.Services.Interfaces;
+using MSWMS.Services.Soap;
 using Serilog;
 using Serilog.Events;
 using OpenTelemetry.Metrics;
@@ -214,9 +217,12 @@ builder.Services.AddAuthorization(options =>
 
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IAsyncRepository<DistributionScan>, DistributionScanRepository>();
 builder.Services.AddScoped<IDistributionRepository, DistributionRepository>();
+builder.Services.AddScoped<IDcxDistributionRepository, DcxDistributionRepository>();
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 builder.Services.AddScoped<IDistributionDocumentRepository, DistributionDocumentRepository>();
+builder.Services.AddScoped<IDcxSoapService, DcxSoapService>();
 builder.Services.AddScoped<IDcxDistributionService, DcxDistributionService>();
 builder.Services.AddScoped<IDistributionService, DistributionService>();
 builder.Services.AddScoped<BoxService>();
