@@ -3,6 +3,7 @@ using MSWMS.Entities;
 using MSWMS.Entities.External;
 using System.Globalization;
 using System.Text;
+using MSWMS.Infrastructure.Helpers;
 
 namespace MSWMS.Models.Requests;
 
@@ -28,26 +29,11 @@ public class CreateOrderRequest
         if (origin is null) throw new Exception("Order not created. Origin location not found.");
         if (destination is null) throw new Exception("Order not created. Destination location not found.");
         if (user is null) throw new Exception("Order not created. User not found");
-
-        static string? NormVariant(string? v)
-        {
-            if (string.IsNullOrWhiteSpace(v)) return null;
-
-            // Убираем невидимые Unicode Format chars (U+202D/U+202C)
-            var cleaned = string.Concat(
-                v.EnumerateRunes()
-                 .Where(r => Rune.GetUnicodeCategory(r) != UnicodeCategory.Format)
-                 .Select(r => r.ToString())
-            );
-
-            cleaned = cleaned.Trim();
-            return cleaned.Length == 0 ? null : cleaned.ToUpperInvariant();
-        }
-
+        
         var itemsList = Items.ToList();
 
         var neededPairs = itemsList
-            .Select(i => new { i.ItemNumber, Variant = NormVariant(i.Variant) })
+            .Select(i => new { i.ItemNumber, Variant = StringProcessor.NormalizeVariant(i.Variant) })
             .ToList();
 
         var itemNumbers = neededPairs.Select(p => p.ItemNumber).Distinct().ToList();
@@ -58,12 +44,12 @@ public class CreateOrderRequest
 
         var items = itemsList.Select(req =>
         {
-            var reqVariant = NormVariant(req.Variant);
+            var reqVariant = StringProcessor.NormalizeVariant(req.Variant);
 
             var info = allInfos
                 .Where(inf =>
                     inf.ItemNumber == req.ItemNumber &&
-                    NormVariant(inf.Variant) == reqVariant)
+                    StringProcessor.NormalizeVariant(inf.Variant) == reqVariant)
                 .ToList();
 
             return new Item
@@ -82,7 +68,7 @@ public class CreateOrderRequest
         {
             var missingPairs = itemsWithoutInfo
                 .Select(x => new { x.item, Request = itemsList[x.index] })
-                .Select(x => new { x.Request.ItemNumber, Variant = NormVariant(x.Request.Variant) })
+                .Select(x => new { x.Request.ItemNumber, Variant = StringProcessor.NormalizeVariant(x.Request.Variant) })
                 .ToList();
 
             var missingItemNumbers = missingPairs.Select(p => p.ItemNumber).Distinct().ToList();
@@ -110,13 +96,13 @@ public class CreateOrderRequest
                 var itemWithoutInfo = entry.item;
                 var request = itemsList[entry.index];
 
-                var reqVariant = NormVariant(request.Variant);
+                var reqVariant = StringProcessor.NormalizeVariant(request.Variant);
 
                 // ВАЖНО: берём ВСЕ совпадения, а не FirstOrDefault
                 var crossRefs = crossReferences
                     .Where(cr =>
                         cr.ItemNo == request.ItemNumber &&
-                        NormVariant(cr.VariantCode) == reqVariant)
+                        StringProcessor.NormalizeVariant(cr.VariantCode) == reqVariant)
                     .ToList();
 
                 if (crossRefs.Count == 0)
@@ -135,7 +121,7 @@ public class CreateOrderRequest
                     {
                         Barcode = crossRef.CrossReferenceNo,
                         ItemNumber = crossRef.ItemNo,
-                        Variant = NormVariant(crossRef.VariantCode),
+                        Variant = StringProcessor.NormalizeVariant(crossRef.VariantCode),
                         Description = crossRef.Description,
                         Price = salesPrice?.UnitPriceIncludingVatCurre ?? 0,
                         DiscountPrice = salesPrice?.DiscountedPriceCurrency ?? 0,
