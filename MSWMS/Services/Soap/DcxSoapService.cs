@@ -20,7 +20,7 @@ public class DcxSoapService : IDcxSoapService
         return client;
     }
 
-    public async Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeaders(string locationCode)
+    public async Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeadersAsync(string locationCode)
     {
         var client = CreateClient();
         
