@@ -6,7 +6,7 @@ using MSWMS.TempModels;
 
 namespace MSWMS.Services;
 
-public class DcxDistributionService
+public class DcxDistributionService : IDcxDistributionService
 {
     private readonly IDcxDistributionRepository _dcxDistributionRepository;
     private readonly IDcxSoapService _soapService;
@@ -25,7 +25,7 @@ public class DcxDistributionService
 
     public async Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeadersAsync(string locationCode)
     {
-        var headers = await _soapService.GetDirectedPickHeaders(locationCode);
+        var headers = await _soapService.GetDirectedPickHeadersAsync(locationCode);
         
         return headers;
     }
@@ -37,7 +37,7 @@ public class DcxDistributionService
         return lines;
     }
 
-    private async Task<List<DistributionItem>> LinesToDistributionItems(DcxMsWarehouseActivityLine[] lines)
+    public async Task<List<DistributionItem>> LinesToDistributionItems(List<DcxMsWarehouseActivityLine> lines)
     {
         var distributionItems = new List<DistributionItem>();
         
@@ -70,7 +70,7 @@ public class DcxDistributionService
         return distributionItems;
     }
 
-    private async Task<string> GetLocationCodeByOrderNumber(string orderNumber)
+    public async Task<string> GetLocationCodeByOrderNumber(string orderNumber)
     {
         if (orderNumber.Contains("SO"))
         {
