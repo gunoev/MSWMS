@@ -22,8 +22,10 @@ public class DistributionItem : BaseEntity
     public required string LotNumber { get; set; }
     
     public int DocumentId { get; set; }
+
+    public int DestinationId { get; set; }
     
-    public required Location Destination { get; set; }
+    public Location? Destination { get; set; }
     
-    public required DistributionDocument Document { get; set; }
+    public DistributionDocument? Document { get; set; }
 }
