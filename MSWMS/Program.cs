@@ -14,6 +14,7 @@ using MSWMS.Infrastructure;
 using MSWMS.Jobs;
 using MSWMS.Models;
 using MSWMS.Repositories;
+using MSWMS.Repositories.Interfaces;
 using MSWMS.Services;
 using MSWMS.Services.Interfaces;
 using Serilog;
@@ -213,7 +214,10 @@ builder.Services.AddAuthorization(options =>
 
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<DistributionRepository>();
+builder.Services.AddScoped<IDistributionRepository, DistributionRepository>();
+builder.Services.AddScoped<ILocationRepository, LocationRepository>();
+builder.Services.AddScoped<IDistributionDocumentRepository, DistributionDocumentRepository>();
+builder.Services.AddScoped<IDcxDistributionService, DcxDistributionService>();
 builder.Services.AddScoped<IDistributionService, DistributionService>();
 builder.Services.AddScoped<BoxService>();
 builder.Services.AddScoped<UserService>();
@@ -316,3 +320,4 @@ app.Urls.Add("https://0.0.0.0:5262");
 app.MapPrometheusScrapingEndpoint();
 
 app.Run();
+
