@@ -33,6 +33,11 @@ public class DcxDistributionRepository : IDcxDistributionRepository
             .Select(th => th.TransferToCode)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public Task<DcxMsItemCrossReference> GetItemCrossReference(string barcode)
+    {
+        return _context.DcxMsItemCrossReference.Where(cr => cr.CrossReferenceNo == barcode).FirstOrDefaultAsync();
+    }
     
     public Task<string> GetSalesDestinationLocationCode(string documentNumber)
     {
