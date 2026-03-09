@@ -13,6 +13,8 @@ public interface IDistributionRepository
     Task UpdateAsync(Distribution entity, CancellationToken cancellationToken = default);
 
     Task DeleteAsync(int id, CancellationToken cancellationToken = default);
-    
-    
+
+    Task<ICollection<Distribution>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate);
+
+
 }

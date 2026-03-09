@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Entities.Distributions;
-using MSWMS.Interfaces;
+using MSWMS.Repositories.Interfaces;
 
 namespace MSWMS.Repositories;
 
-public class DistributionDocumentRepository : IAsyncRepository<DistributionDocument>
+public class DistributionDocumentRepository : IDistributionDocumentRepository
 {
     private readonly AppDbContext _context;
 
@@ -26,6 +26,15 @@ public class DistributionDocumentRepository : IAsyncRepository<DistributionDocum
         return await _context.DistributionDocuments
             .Include(dd => dd.Items)
             .FirstOrDefaultAsync(dd => dd.Id == id, cancellationToken);
+    }
+
+    public async Task<DistributionDocument?> GetByDistributionAndDocumentIdAsync(
+        int distributionId,
+        int documentId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.DistributionDocuments
+            .FirstOrDefaultAsync(dd => dd.DistributionId == distributionId && dd.Id == documentId, cancellationToken);
     }
 
     public async Task<IEnumerable<DistributionDocument>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -50,7 +59,10 @@ public class DistributionDocumentRepository : IAsyncRepository<DistributionDocum
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var distributionDocument = await _context.DistributionDocuments.FindAsync([id], cancellationToken: cancellationToken);
-        if (distributionDocument is null) return;
+        if (distributionDocument is null)
+        {
+            return;
+        }
 
         _context.DistributionDocuments.Remove(distributionDocument);
         await _context.SaveChangesAsync(cancellationToken);
