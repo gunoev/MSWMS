@@ -1,4 +1,5 @@
 using MSWMS.Entities.Distributions;
+using MSWMS.Models;
 using MSWMS.Models.DTO.Soap.Responses;
 using MSWMS.Repositories.Interfaces;
 using MSWMS.Services.Interfaces;
@@ -68,6 +69,11 @@ public class DcxDistributionService : IDcxDistributionService
         }
         
         return distributionItems;
+    }
+
+    public async Task<DcxMsItemCrossReference?> GetItemCrossReference(string barcode)
+    {
+        return await _dcxDistributionRepository.GetItemCrossReference(barcode);
     }
 
     public async Task<string> GetLocationCodeByOrderNumber(string orderNumber)
