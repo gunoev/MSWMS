@@ -1,6 +1,6 @@
 namespace MSWMS.Entities.Distributions;
 
-public enum ScanStatus
+public enum DistributionScanStatus
 {
     Ok,
     Excess,
