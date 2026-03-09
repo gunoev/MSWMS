@@ -19,7 +19,7 @@ public class DistributionScan : BaseEntity
     
     public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
     
-    public ScanStatus Status { get; set; } = ScanStatus.Ok;
+    public DistributionScanStatus Status { get; set; } = DistributionScanStatus.Ok;
     
     public int UserId { get; set; }
     
