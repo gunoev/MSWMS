@@ -1,4 +1,4 @@
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using MSWMS.Models;
 using MSWMS.Repositories.Interfaces;
 using MSWMS.TempModels;
