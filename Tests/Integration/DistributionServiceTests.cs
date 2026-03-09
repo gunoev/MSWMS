@@ -1,8 +1,10 @@
 using Moq;
 using MSWMS.Entities.Distributions;
+using MSWMS.Interfaces;
 using MSWMS.Models.DTO.Requests;
 using MSWMS.Repositories.Interfaces;
 using MSWMS.Services;
+using MSWMS.Services.Interfaces;
 
 namespace Tests.Integration;
 
@@ -11,12 +13,26 @@ public class DistributionServiceTests
     private readonly DistributionService _service;
     private readonly Mock<IDistributionRepository> _distributionRepository;
     private readonly Mock<ILocationRepository> _locationRepository;
+    private readonly Mock<IDistributionDocumentRepository> _distributionDocumentRepository;
+    private readonly Mock<IDcxDistributionService> _dcxDistributionService;
+    private readonly Mock<IAsyncRepository<DistributionScan>> _distributionScanRepository;
+    
     
     public DistributionServiceTests()
     {
         _distributionRepository = new Mock<IDistributionRepository>();
         _locationRepository = new Mock<ILocationRepository>();
-        _service = new DistributionService(_distributionRepository.Object, _locationRepository.Object);
+        _distributionDocumentRepository = new Mock<IDistributionDocumentRepository>();
+        _dcxDistributionService = new Mock<IDcxDistributionService>();
+        _distributionScanRepository = new Mock<IAsyncRepository<DistributionScan>>();
+        
+        
+        _service = new DistributionService(
+            _distributionRepository.Object, 
+            _locationRepository.Object, 
+            _distributionDocumentRepository.Object, 
+            _dcxDistributionService.Object,
+            _distributionScanRepository.Object);
     }
     [Fact]
     public async Task CreateAsync_Should_Create_Entity_And_Save_It()
@@ -44,6 +60,15 @@ public class DistributionServiceTests
                     d.Note == request.Note),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+    
+    [Fact]
+    public async Task GetDistributionsByDateRangeAsync_Should_Return_Distributions()
+    {
+        var result = await _service.GetDistributionsByDateRangeAsync(DateOnly.Parse("2026-01-01"), DateOnly.Parse("2026-01-02"));
+        
+        Assert.NotNull(result);
+        Assert.IsAssignableFrom<ICollection<Distribution>>(result);
     }
 
     [Fact]
@@ -97,15 +122,25 @@ public class DistributionServiceTests
     [Fact]
     public async Task AddDocuments_Should_Add_And_Assign_Documents_To_Distribution()
     {
-        var documentsNumber = new List<string>(["20WPAE087891", "20WPAE087892", "20WPAE087893"]);
+        var documentRequests = new List<CreateDistributionDocumentRequest>
+        {
+            new CreateDistributionDocumentRequest { DistributionId = 1, DocumentNumber = "1234567890", OrderNumber = "1234567890"},
+            new CreateDistributionDocumentRequest { DistributionId = 1, DocumentNumber = "1234567891", OrderNumber = "1234567891"},
+            new CreateDistributionDocumentRequest { DistributionId = 1, DocumentNumber = "1234567892", OrderNumber = "1234567892"}
+        };
         
-        await _service.AddDocuments(1,  documentsNumber);
+        var result = await _service.AddDocumentsAsync(documentRequests);
         
-        var distribution = await _service.GetByIdAsync(1);
+        Assert.NotNull(result);
         
-        Assert.NotNull(distribution);
+        Assert.NotEmpty(result);
+        Assert.Equal(3, result.Count);
         
-        Assert.NotEmpty(distribution.Documents);
+        _distributionDocumentRepository.Verify(
+            x => x.AddAsync(
+                It.IsAny<DistributionDocument>(),
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(3));
     }
 
     [Fact]
