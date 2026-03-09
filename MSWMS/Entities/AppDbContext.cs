@@ -235,7 +235,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<DistributionItem>()
-            .HasOne(di => di.Destination);
+            .HasOne(di => di.Destination)
+            .WithMany()
+            .HasForeignKey(di => di.DestinationId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<DistributionItem>()
             .HasIndex(d => d.BinCode);
