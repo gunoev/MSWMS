@@ -94,9 +94,14 @@ public class DistributionService : IDistributionService
         var origin = await _locationRepository.GetByIdAsync(request.OriginId, cancellationToken);
         var destination = await _locationRepository.GetByIdAsync(request.DestinationId, cancellationToken);
 
-        if (origin is null || destination is null)
+        if (origin is null)
         {
-            return null;
+            throw new Exception("Origin location not found.");
+        }
+
+        if (destination is null)
+        {
+            throw new Exception("Destination location not found.");
         }
 
         var lines = await _dcxDistributionService.GetDirectedPickLinesAsync(request.DocumentNumber);
@@ -106,12 +111,9 @@ public class DistributionService : IDistributionService
         {
             DocumentNumber = request.DocumentNumber,
             OrderNumber = request.OrderNumber,
-            OriginId = request.OriginId,
-            DestinationId = request.DestinationId,
-            DistributionId = request.DistributionId,
-            Origin = origin,
-            Destination = destination,
-            Distribution = distribution,
+            OriginId = origin.Id,
+            DestinationId = destination.Id,
+            DistributionId = distribution.Id,
             Items = items
         };
 
@@ -364,26 +366,26 @@ public class DistributionService : IDistributionService
         var distribution = await _distributionRepository.GetByIdAsync(request.DistributionId);
         if (distribution is null)
         {
-            return MapToDto(CreateTransientScan(request, ScanStatus.Error));
+            return MapToDto(CreateTransientScan(request, DistributionScanStatus.Error));
         }
 
         var document = await GetDocumentWithItemsAsync(request.DistributionId, request.DocumentId);
         if (document is null)
         {
-            return MapToDto(CreateTransientScan(request, ScanStatus.Error, distributionId: distribution.Id));
+            return MapToDto(CreateTransientScan(request, DistributionScanStatus.Error, distributionId: distribution.Id));
         }
 
         var item = FindMatchingItem(document, request.Item);
         var crossReference = await _dcxDistributionService.GetItemCrossReference(request.Barcode);
         var status = await ResolveScanStatusAsync(request, item, crossReference);
 
-        if (status != ScanStatus.Ok)
+        if (status != DistributionScanStatus.Ok)
         {
             return MapToDto(CreateTransientScan(request, status, distributionId: distribution.Id,
                 documentId: document.Id, itemId: item?.Id));
         }
 
-        var scan = CreateScan(request, distribution.Id, document, item!, ScanStatus.Ok);
+        var scan = CreateScan(request, distribution.Id, document, item!, DistributionScanStatus.Ok);
         await _distributionScanRepository.AddAsync(scan);
 
         return MapToDto(scan);
@@ -417,27 +419,27 @@ public class DistributionService : IDistributionService
             string.Equals(i.LotNumber, itemDto.LotNumber, StringComparison.OrdinalIgnoreCase));
     }
 
-    private async Task<ScanStatus> ResolveScanStatusAsync(DistributionScanRequest request, DistributionItem? item,
+    private async Task<DistributionScanStatus> ResolveScanStatusAsync(DistributionScanRequest request, DistributionItem? item,
         DcxMsItemCrossReference? crossReference)
     {
         if (item is null)
         {
-            return ScanStatus.NotFound;
+            return DistributionScanStatus.NotFound;
         }
 
         if (!IsBarcodeMatchingItem(request, crossReference))
         {
-            return ScanStatus.NotFound;
+            return DistributionScanStatus.NotFound;
         }
 
         var scannedQuantity = await GetScannedQuantityAsync(request.DistributionId, item.Id);
-        return scannedQuantity < item.Quantity ? ScanStatus.Ok : ScanStatus.Excess;
+        return scannedQuantity < item.Quantity ? DistributionScanStatus.Ok : DistributionScanStatus.Excess;
     }
 
     private async Task<int> GetScannedQuantityAsync(int distributionId, int itemId)
     {
         var scans = await _distributionScanRepository.GetAllAsync();
-        return scans.Count(s => s.DistributionId == distributionId && s.ItemId == itemId && s.Status == ScanStatus.Ok);
+        return scans.Count(s => s.DistributionId == distributionId && s.ItemId == itemId && s.Status == DistributionScanStatus.Ok);
     }
 
     private static bool IsBarcodeMatchingItem(DistributionScanRequest request, DcxMsItemCrossReference? crossReference)
@@ -455,7 +457,7 @@ public class DistributionService : IDistributionService
     }
 
     private static DistributionScan CreateScan(DistributionScanRequest request, int distributionId,
-        DistributionDocument document, DistributionItem item, ScanStatus status)
+        DistributionDocument document, DistributionItem item, DistributionScanStatus status)
     {
         return new DistributionScan
         {
@@ -478,7 +480,7 @@ public class DistributionService : IDistributionService
         };
     }
 
-    private static DistributionScan CreateTransientScan(DistributionScanRequest request, ScanStatus status,
+    private static DistributionScan CreateTransientScan(DistributionScanRequest request, DistributionScanStatus status,
         int? distributionId = null, int? documentId = null, int? itemId = null)
     {
         return new DistributionScan
