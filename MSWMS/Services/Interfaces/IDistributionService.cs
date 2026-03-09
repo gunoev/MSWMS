@@ -23,4 +23,11 @@ public interface IDistributionService
     Task<IReadOnlyList<DistributionItemDto>> GetDistributionItemsDtoAsync(int distributionId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DistributionScanDto>> GetScansDtoAsync(int distributionId, CancellationToken cancellationToken = default);
     Task<DistributionScanDto?> GetScanDtoByIdAsync(int distributionId, int scanId, CancellationToken cancellationToken = default);
+
+    Task<Distribution> CreateDistributionAsync(CreateDistributionRequest request);
+
+    Task<List<DistributionDocument>> AddDocumentsAsync(
+        List<CreateDistributionDocumentRequest> documentRequests, CancellationToken cancellationToken = default);
+
+    Task<DistributionScanDto> ProceedScanAsync(DistributionScanRequest request);
 }
