@@ -20,15 +20,21 @@ public class DistributionController : ControllerBase
     private readonly IDistributionService _distributionService;
     private readonly IDistributionDocumentRepository _distributionDocumentRepository;
     private readonly IAsyncRepository<DistributionScan> _distributionScanRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IHubContext<ScanHub> _hubContext;
 
     public DistributionController(
         IDistributionService distributionService,
         IDistributionDocumentRepository distributionDocumentRepository,
-        IAsyncRepository<DistributionScan> distributionScanRepository)
+        IAsyncRepository<DistributionScan> distributionScanRepository,
+        IUserRepository userRepository,
+        IHubContext<ScanHub> hubContext)
     {
         _distributionService = distributionService;
         _distributionDocumentRepository = distributionDocumentRepository;
         _distributionScanRepository = distributionScanRepository;
+        _userRepository = userRepository;
+        _hubContext = hubContext;
     }
 
     // POST: /api/distributions
