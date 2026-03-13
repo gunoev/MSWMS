@@ -286,13 +286,24 @@ public class DistributionController : ControllerBase
     [HttpDelete("{id:int}/scans/{scanId:int}")]
     public async Task<IActionResult> DeleteScan([FromRoute] int id, [FromRoute] int scanId)
     {
-        var scan = await _distributionScanRepository.GetByIdAsync(scanId);
-        if (scan is null || scan.DistributionId != id)
+        var scan = await _distributionService.GetScanDtoByIdAsync(id, scanId);
+        if (scan is null)
         {
             return NotFound();
         }
 
+        var items = await _distributionService.GetDistributionItemsDtoAsync(id);
+        var response = new DistributionScanResponse
+        {
+            Scan = scan,
+            Item = items.FirstOrDefault(i => i.Id == scan.ItemId)
+        };
+
         await _distributionScanRepository.DeleteAsync(scanId);
+
+        var groupName = $"Distribution_{id}";
+        await _hubContext.Clients.Group(groupName).SendAsync("distributionScanDeleted", response);
+
         return NoContent();
     }
 
