@@ -1,4 +1,4 @@
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 using MSWMS.Entities;
 using MSWMS.Entities.Distributions;
 using MSWMS.Interfaces;
@@ -53,4 +53,26 @@ public class DistributionRepository : IDistributionRepository
         return await _context.Distributions.Where(d => d.Date >= startDate && d.Date <= endDate).ToListAsync();
     }
     
+    public async Task<ICollection<DistributionScan>> GetScansByDistributionIdAsync(int distributionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.DistributionScans
+            .Include(ds => ds.User)
+            .Where(ds => ds.DistributionId == distributionId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<ICollection<DistributionItem>> GetItemsByDistributionIdAsync(int distributionId,
+        CancellationToken cancellationToken = default)
+    {
+        var documentsIds = await _context.DistributionDocuments
+            .Where(dd => dd.DistributionId == distributionId)
+            .Select(dd => dd.Id)
+            .ToListAsync(cancellationToken);
+        
+        return await _context.DistributionItems
+            .Include(di => di.Destination)
+            .Where(di => documentsIds.Contains(di.DocumentId))
+            .ToListAsync(cancellationToken);
+    }
+
 }
