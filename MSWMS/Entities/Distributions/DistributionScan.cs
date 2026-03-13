@@ -31,11 +31,11 @@ public class DistributionScan : BaseEntity
     
     public int? ItemId { get; set; }
     
-    public required User User { get; set; }
+    public User? User { get; set; }
     
-    public required Location Origin { get; set; }
+    public Location? Origin { get; set; }
     
     public DistributionDocument? Document { get; set; }
     
-    public required Distribution Distribution { get; set; }
+    public Distribution? Distribution { get; set; }
 }
