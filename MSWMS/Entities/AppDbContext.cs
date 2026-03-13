@@ -214,12 +214,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .WithMany()
             .HasForeignKey(d => d.OriginId)
             .OnDelete(DeleteBehavior.NoAction);
-        
-        modelBuilder.Entity<DistributionDocument>()
-            .HasOne(d => d.Destination)
-            .WithMany()
-            .HasForeignKey(d => d.DestinationId)
-            .OnDelete(DeleteBehavior.NoAction);
 
         modelBuilder.Entity<DistributionDocument>()
             .HasIndex(d => d.DocumentNumber);
