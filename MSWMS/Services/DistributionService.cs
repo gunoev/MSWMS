@@ -340,7 +340,10 @@ public class DistributionService : IDistributionService
             Quantity = item.Quantity,
             BinCode = item.BinCode,
             LotNumber = item.LotNumber,
-            DocumentId = item.DocumentId
+            DocumentId = item.DocumentId,
+            DestinationId = item.DestinationId,
+            DestinationCode = item.Destination?.Code ?? "ERROR",
+            DestinationName = item.Destination?.Name ?? "UNKNOWN"
         };
     }
 
