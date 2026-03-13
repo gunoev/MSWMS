@@ -107,7 +107,6 @@ public class DistributionService : IDistributionService
             DocumentNumber = request.DocumentNumber,
             OrderNumber = request.OrderNumber,
             OriginId = origin.Id,
-            DestinationId = destination.Id,
             DistributionId = distribution.Id,
             Items = items
         };
