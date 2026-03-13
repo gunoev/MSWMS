@@ -10,4 +10,7 @@ public class DistributionItemDto
     public string BinCode { get; set; } = string.Empty;
     public string LotNumber { get; set; } = string.Empty;
     public int DocumentId { get; set; }
+    public string DestinationCode { get; set; } = string.Empty;
+    public string DestinationName { get; set; } = string.Empty;
+    public int DestinationId { get; set; }
 }
