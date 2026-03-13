@@ -180,8 +180,8 @@ public class DistributionService : IDistributionService
     public async Task<IReadOnlyList<DistributionItem>> GetDistributionItemsAsync(int distributionId,
         CancellationToken cancellationToken = default)
     {
-        var documents = await GetDocumentsAsync(distributionId, cancellationToken);
-        return documents.SelectMany(d => d.Items).ToList();
+        var items =  await _distributionRepository.GetItemsByDistributionIdAsync(distributionId, cancellationToken);
+        return items.ToList();
     }
 
     public async Task<IReadOnlyList<DistributionScan>> GetScansAsync(int distributionId,
