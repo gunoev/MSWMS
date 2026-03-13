@@ -95,3 +95,40 @@ dotnet ef dbcontext scaffold "Server=192.168.51.13;Database=DCX-MS;User Id=picka
 - [ ] Написать модульные тесты для `DistributionScanService` (логика статусов).
 - [ ] Протестировать интеграцию с WMS (загрузка строк).
 - [ ] Проверить работу SignalR уведомлений.
+
+
+
+
+# Pipeline
+    - Manager
+        - Создание Distribution
+        - Добавление документов в distribution (получение documents no из directedpick/headers)
+        - Возможность удалить distribution или отдельные документы
+        - Остальные возможности как у DistributionPicker
+        
+    - DistributionPicker
+        - Просмотр списка distributions по date range
+        - Выбор Distribution для работы (подключение к signalR hub)
+        - сканирование
+        - удаление scans (на каждом item кнопка для удаление скана, удаляется последний для этого user и item)
+        - фильтры по lotNo по location (location выбор из списка) фильтры не должны сбрасываться (только вручную)
+        - таблица scans как в Scanning (без box) (кнопка для навигации к item в другой таблице при клике)
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
