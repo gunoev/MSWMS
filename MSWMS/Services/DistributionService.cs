@@ -296,6 +296,13 @@ public class DistributionService : IDistributionService
     {
         return await _distributionRepository.GetByDateRangeAsync(startDate, endDate);
     }
+    
+    public async Task<ICollection<DistributionDto>> GetDistributionsDtoByDateRangeAsync(DateOnly startDate, DateOnly endDate)
+    {
+        var distributions = await _distributionRepository.GetByDateRangeAsync(startDate, endDate);
+        var distributionDtos = distributions.Select(d => MapToDto(d, 0, 0)).ToList();
+        return distributionDtos;
+    }
 
     private static DistributionDto MapToDto(Distribution distribution, int documentsCount, int scansCount)
     {
