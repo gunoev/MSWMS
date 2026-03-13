@@ -359,6 +359,7 @@ public class DistributionService : IDistributionService
             TimeStamp = scan.TimeStamp,
             Status = scan.Status,
             UserId = scan.UserId,
+            Username = scan.User?.Username ?? "UNKNOWN",
             OriginId = scan.OriginId,
             DistributionId = scan.DistributionId,
             DocumentId = scan.DocumentId,
