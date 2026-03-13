@@ -4,6 +4,7 @@ using MSWMS.Interfaces;
 using MSWMS.Models;
 using MSWMS.Models.DTO.Requests;
 using MSWMS.Models.DTO.Responses.Distributions;
+using MSWMS.Models.DTO.Soap.Responses;
 using MSWMS.Repositories.Interfaces;
 using MSWMS.Services.Interfaces;
 using Serilog;
