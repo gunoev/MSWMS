@@ -61,8 +61,7 @@ public class DcxDistributionService : IDcxDistributionService
                 BinCode = line.BinCode,
                 LotNumber = line.LotNo,
                 DocumentId = 0,
-                DestinationId = location.Id,
-                Destination = location,
+                DestinationId = location.Id,    
                 Document = null!
             };
             
