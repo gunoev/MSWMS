@@ -12,6 +12,7 @@ public class DistributionScanDto
     public DateTime TimeStamp { get; set; }
     public DistributionScanStatus Status { get; set; }
     public int UserId { get; set; }
+    public required string Username { get; set; }
     public int OriginId { get; set; }
     public int DistributionId { get; set; }
     public int? DocumentId { get; set; }
