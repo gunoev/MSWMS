@@ -382,7 +382,7 @@ public class DistributionService : IDistributionService
         }
 
         var item = FindMatchingItem(document, request.Item);
-        var crossReference = await _dcxDistributionService.GetItemCrossReference(request.Barcode);
+        var crossReference = await GetItemCrossReferenceAsync(request.Barcode);
         var status = await ResolveScanStatusAsync(request, item, crossReference);
 
         if (status != DistributionScanStatus.Ok)
