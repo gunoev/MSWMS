@@ -397,6 +397,11 @@ public class DistributionService : IDistributionService
         return MapToDto(scan);
     }
 
+    public async Task<DcxMsItemCrossReference?> GetItemCrossReferenceAsync(string barcode)
+    {
+        return await _dcxDistributionService.GetItemCrossReference(barcode);
+    }
+
     private async Task<DistributionDocument?> GetDocumentWithItemsAsync(int distributionId, int documentId)
     {
         var document = await _distributionDocumentRepository.GetByIdAsync(documentId);
