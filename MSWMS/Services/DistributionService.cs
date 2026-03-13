@@ -523,4 +523,9 @@ public class DistributionService : IDistributionService
             return false;
         }
     }
+
+    public async Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeaders()
+    {
+        return await _dcxDistributionService.GetDirectedPickHeadersAsync("W01");
+    }
 }
