@@ -295,4 +295,11 @@ public class DistributionController : ControllerBase
         await _distributionScanRepository.DeleteAsync(scanId);
         return NoContent();
     }
+
+    [HttpGet("directedpick/headers")]
+    public async Task<ActionResult<List<DirectedPickGetHeadersResult>>> GetDirectedPickHeaders()
+    {
+        var headers = await _distributionService.GetDirectedPickHeaders();
+        return Ok(headers);
+    }
 }
