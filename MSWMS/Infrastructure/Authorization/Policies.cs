@@ -10,6 +10,7 @@ public static class Policies
     public const string RequirePicker = "RequirePicker";
     public const string RequireDispatcher = "RequireDispatcher";
     public const string RequireLoadingOperator = "RequireLoadingOperator";
+    public const string RequireDistributionPicker = "RequireDistributionPicker";
     public const string RequireManagerOrDispatcher = "RequireManagerOrDispatcher";
     public const string RequireManagerOrPicker = "RequireManagerOrPicker";
     public const string RequireDispatcherOrLoadingOperator = "RequireDispatcherOrLoadingOperator";
@@ -59,6 +60,12 @@ public static class Policies
             policy.RequireRole(
                 nameof(Role.RoleType.Dispatcher), 
                 nameof(Role.RoleType.LoadingOperator), 
+                nameof(Role.RoleType.Admin)));
+        
+        options.AddPolicy(RequireDistributionPicker, policy => 
+            policy.RequireRole(
+                nameof(Role.RoleType.Manager),
+                nameof(Role.RoleType.DistributionPicker),
                 nameof(Role.RoleType.Admin)));
     }
 }
