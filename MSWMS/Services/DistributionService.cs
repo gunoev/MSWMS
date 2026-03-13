@@ -324,7 +324,6 @@ public class DistributionService : IDistributionService
             DocumentNumber = document.DocumentNumber,
             OrderNumber = document.OrderNumber,
             OriginId = document.OriginId,
-            DestinationId = document.DestinationId,
             DistributionId = document.DistributionId,
             ItemsCount = document.Items.Count
         };
