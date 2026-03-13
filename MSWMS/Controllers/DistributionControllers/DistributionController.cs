@@ -58,6 +58,23 @@ public class DistributionController : ControllerBase
 
         return distribution;
     }
+    
+    // GET: /api/distributions?startDate=2026-03-01&endDate=2026-03-10
+    [HttpGet]
+    public async Task<ActionResult<IReadOnlyList<DistributionDto>>> GetDistributionsByDateRange(
+        [FromQuery] DateOnly startDate,
+        [FromQuery] DateOnly endDate)
+    {
+        if (startDate > endDate)
+        {
+            return BadRequest("startDate must be less than or equal to endDate.");
+        }
+
+        var distributionDtos = await _distributionService.GetDistributionsDtoByDateRangeAsync(startDate, endDate);
+        
+
+        return Ok(distributionDtos);
+    }
 
     // DELETE: /api/distributions/{id}
     [HttpDelete("{id:int}")]
