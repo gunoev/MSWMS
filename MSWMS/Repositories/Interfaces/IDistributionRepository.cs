@@ -16,5 +16,10 @@ public interface IDistributionRepository
 
     Task<ICollection<Distribution>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate);
 
+    Task<ICollection<DistributionScan>> GetScansByDistributionIdAsync(int distributionId, CancellationToken cancellationToken = default);
+
+    Task<ICollection<DistributionItem>> GetItemsByDistributionIdAsync(int distributionId,
+        CancellationToken cancellationToken = default);
+
 
 }
