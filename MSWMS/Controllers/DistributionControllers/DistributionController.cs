@@ -272,13 +272,35 @@ public class DistributionController : ControllerBase
     }
 
     // POST: /api/distributions/{id}/scans
+    [Authorize(Policy = Policies.RequireDistributionPicker)]
     [HttpPost("{id:int}/scans")]
     public async Task<ActionResult<DistributionScanDto>> ProceedScan(
         [FromRoute] int id,
         [FromBody] DistributionScanRequest request)
     {
+        
+        var user = await _userRepository.GetByNameAsync(User.Identity?.Name?? string.Empty);
+        
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+        
         request.DistributionId = id;
+        request.UserId = user.Id;
+
         var scan = await _distributionService.ProceedScanAsync(request);
+        
+        var items = await _distributionService.GetDistributionItemsDtoAsync(id);
+        var response = new DistributionScanResponse
+        {
+            Scan = scan,
+            Item = items.FirstOrDefault(i => i.Id == scan.ItemId)
+        };
+
+        var groupName = $"Distribution_{id}";
+        await _hubContext.Clients.Group(groupName).SendAsync("distributionScanProcessed", response);
+
         return Ok(scan);
     }
 
