@@ -99,11 +99,6 @@ public class DistributionService : IDistributionService
             throw new Exception("Origin location not found.");
         }
 
-        if (destination is null)
-        {
-            throw new Exception("Destination location not found.");
-        }
-
         var lines = await _dcxDistributionService.GetDirectedPickLinesAsync(request.DocumentNumber);
         var items = await _dcxDistributionService.LinesToDistributionItems(lines);
 
