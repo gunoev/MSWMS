@@ -194,7 +194,7 @@ public class DistributionService : IDistributionService
             return [];
         }
 
-        return distribution.Scans.ToList();
+        return scans.ToList();
     }
 
     public async Task<DistributionScan?> GetScanByIdAsync(int distributionId, int scanId,
