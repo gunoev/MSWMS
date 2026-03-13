@@ -14,13 +14,9 @@ public class DistributionDocument : BaseEntity
     
     public int OriginId { get; set; }
     
-    public int DestinationId { get; set; }
-    
     public int DistributionId { get; set; }
     
     public Location? Origin { get; set; }
-    
-    public Location? Destination { get; set; }
 
     public Distribution? Distribution { get; set; }
 }
