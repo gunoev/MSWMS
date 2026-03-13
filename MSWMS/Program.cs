@@ -5,7 +5,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using MSWMS.Entities;
 using MSWMS.Entities.Distributions;
@@ -217,6 +216,7 @@ builder.Services.AddAuthorization(options =>
 
 
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAsyncRepository<DistributionScan>, DistributionScanRepository>();
 builder.Services.AddScoped<IDistributionRepository, DistributionRepository>();
 builder.Services.AddScoped<IDcxDistributionRepository, DcxDistributionRepository>();
