@@ -187,8 +187,9 @@ public class DistributionService : IDistributionService
     public async Task<IReadOnlyList<DistributionScan>> GetScansAsync(int distributionId,
         CancellationToken cancellationToken = default)
     {
-        var distribution = await _distributionRepository.GetByIdAsync(distributionId, cancellationToken);
-        if (distribution is null)
+        var scans = await _distributionRepository.GetScansByDistributionIdAsync(distributionId, cancellationToken);
+
+        if (scans.Count == 0)
         {
             return [];
         }
