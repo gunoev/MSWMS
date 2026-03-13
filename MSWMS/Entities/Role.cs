@@ -19,5 +19,6 @@ public class Role
         LoadingOperator,
         Dispatcher,
         Unknown,
+        DistributionPicker,
     }
 }
