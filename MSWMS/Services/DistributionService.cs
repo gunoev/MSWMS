@@ -483,11 +483,6 @@ public class DistributionService : IDistributionService
             DistributionId = distributionId,
             DocumentId = document.Id,
             ItemId = item.Id,
-            User = null!,
-            Origin = null!,
-            Distribution = null!,
-            Document = null,
-            Item = null
         };
     }
 
