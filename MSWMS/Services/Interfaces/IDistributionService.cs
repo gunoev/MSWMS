@@ -1,6 +1,7 @@
 using MSWMS.Entities.Distributions;
 using MSWMS.Models.DTO.Requests;
 using MSWMS.Models.DTO.Responses.Distributions;
+using MSWMS.Models.DTO.Soap.Responses;
 
 namespace MSWMS.Services.Interfaces;
 
@@ -30,4 +31,10 @@ public interface IDistributionService
         List<CreateDistributionDocumentRequest> documentRequests, CancellationToken cancellationToken = default);
 
     Task<DistributionScanDto> ProceedScanAsync(DistributionScanRequest request);
+    
+    Task<ICollection<Distribution>> GetDistributionsByDateRangeAsync(DateOnly startDate, DateOnly endDate);
+
+    Task<List<DirectedPickGetHeadersResult>> GetDirectedPickHeaders();
+
+    Task<ICollection<DistributionDto>> GetDistributionsDtoByDateRangeAsync(DateOnly startDate, DateOnly endDate);
 }
