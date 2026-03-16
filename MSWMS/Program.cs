@@ -215,6 +215,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<BoxService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<ScanHub>();
 builder.Services.AddScoped<IScanService, ScanService>();
 builder.Services.AddScoped<ISalesPriceUpdater, SalesPriceUpdater>();
