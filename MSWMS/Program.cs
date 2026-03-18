@@ -42,6 +42,7 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .Filter.ByExcluding(logEvent =>
         logEvent.Properties.TryGetValue("RequestPath", out var requestPath) &&
         requestPath.ToString().Contains("/metrics"))
+    .WriteTo.Console()
     .WriteTo.GrafanaLoki("http://localhost:3100",
         labels: new List<LokiLabel>
     {
