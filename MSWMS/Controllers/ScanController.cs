@@ -104,12 +104,12 @@ public class ScanController : ControllerBase
                 Date = currentDate.Date,
                 TotalScans = await _context.Scans
                     .AsNoTracking()
-                    .Where(s => s.TimeStamp >= currentDate && s.TimeStamp < nextDate)
+                    .Where(s => s.TimeStamp >= currentDate && s.TimeStamp < nextDate && s.Status == Scan.ScanStatus.Ok)
                     .CountAsync(),
 
                 TotalBoxes = await _context.Scans
                     .AsNoTracking()
-                    .Where(s => s.TimeStamp >= currentDate && s.TimeStamp < nextDate)
+                    .Where(s => s.TimeStamp >= currentDate && s.TimeStamp < nextDate && s.Status == Scan.ScanStatus.Ok)
                     .Select(s => s.Box.Id)
                     .Distinct()
                     .CountAsync(),
@@ -131,14 +131,14 @@ public class ScanController : ControllerBase
                     .AsNoTracking()
                     .Where(s => s.TimeStamp >= currentDate && 
                                s.TimeStamp < nextDate && 
-                               s.User.Username == user.Username)
+                               s.User.Username == user.Username && s.Status == Scan.ScanStatus.Ok)
                     .CountAsync();
 
                 var boxes = await _context.Scans
                     .AsNoTracking()
                     .Where(s => s.TimeStamp >= currentDate && 
                                s.TimeStamp < nextDate && 
-                               s.User.Username == user.Username)
+                               s.User.Username == user.Username && s.Status == Scan.ScanStatus.Ok)
                     .Select(s => s.Box.Id)
                     .Distinct()
                     .CountAsync();
