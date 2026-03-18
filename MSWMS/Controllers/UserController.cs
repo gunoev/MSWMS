@@ -36,7 +36,7 @@ namespace MSWMS.Controllers
                 .Include(u => u.Roles)
                 .Include(u => u.Location)
                 .ToListAsync();
-            var userDtos = users.Select(user => new
+            var userDtos = users.Where(u => u.Status == Entities.User.UserStatus.Active).Select(user => new
             {
                 Id = user.Id,
                 Name = user.Name,
