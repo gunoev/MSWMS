@@ -65,28 +65,15 @@ public class ReportService
             query = query.Where(s => s.TimeStamp >= startDateInclusive && s.TimeStamp < endDateExclusive);
         }
 
-        var pricingScanRows = await query
+        var scans = await query
             .OrderBy(s => s.TimeStamp)
-            .Select(s => new PricingScanRow
+            .Select(s => new
             {
-                TimeStamp = s.TimeStamp,
-                Barcode = s.Barcode,
-                ItemNumber = s.Item != null
-                    ? s.Item.ItemInfo.Select(ii => ii.ItemNumber).FirstOrDefault() ?? string.Empty
-                    : _context.ItemInfos.Where(ii => ii.Barcode == s.Barcode).Select(ii => ii.ItemNumber).FirstOrDefault() ?? string.Empty,
-                Variant = s.Item != null
-                    ? s.Item.ItemInfo.Select(ii => ii.Variant).FirstOrDefault() ?? string.Empty
-                    : _context.ItemInfos.Where(ii => ii.Barcode == s.Barcode).Select(ii => ii.Variant).FirstOrDefault() ?? string.Empty,
-                Description = s.Item != null
-                    ? s.Item.ItemInfo.Select(ii => ii.Description).FirstOrDefault() ?? string.Empty
-                    : _context.ItemInfos.Where(ii => ii.Barcode == s.Barcode).Select(ii => ii.Description).FirstOrDefault() ?? string.Empty,
+                s.TimeStamp,
+                s.Barcode,
+                OrderId = s.Order.Id,
                 OrderNumber = s.Order.TransferOrderNumber,
                 ShipmentNumber = s.Order.TransferShipmentNumber,
-                OrderTotalQuantity = s.Order.Items.Sum(i => (int?)i.NeededQuantity).GetValueOrDefault().ToString(),
-                OrderTotalScanned = (s.Order.Scans != null
-                    ? s.Order.Scans.Count(os => os.Status == Scan.ScanStatus.Ok)
-                    : 0).ToString(),
-                OrderTotalBoxes = (s.Order.Boxes != null ? s.Order.Boxes.Count : 0).ToString(),
                 UserId = s.User.Id,
                 Username = s.User.Username,
                 Origin = s.Order.Origin.Name,
@@ -94,11 +81,82 @@ public class ReportService
                 OriginCode = s.Order.Origin.Code,
                 DestinationCode = s.Order.Destination.Code,
                 BoxId = s.Box.UniqueId ?? s.Box.Guid.ToString(),
-                Quantity = 1,
-                BoxNumber = s.Box.BoxNumber
+                s.Box.BoxNumber
             })
             .ToListAsync();
-        
-        return pricingScanRows;
+
+        if (scans.Count == 0)
+        {
+            return [];
+        }
+
+        var orderIds = scans
+            .Select(s => s.OrderId)
+            .Distinct()
+            .ToList();
+
+        var barcodes = scans
+            .Select(s => s.Barcode)
+            .Where(b => !string.IsNullOrWhiteSpace(b))
+            .Distinct()
+            .ToList();
+
+        var orderStats = await _context.Orders
+            .AsNoTracking()
+            .Where(o => orderIds.Contains(o.Id))
+            .Select(o => new
+            {
+                o.Id,
+                TotalQuantity = o.Items.Sum(i => (int?)i.NeededQuantity) ?? 0,
+                TotalScanned = o.Scans.Count(s => s.Status == Scan.ScanStatus.Ok),
+                TotalBoxes = o.Boxes.Count()
+            })
+            .ToDictionaryAsync(o => o.Id);
+
+        var itemInfos = await _context.ItemInfos
+            .AsNoTracking()
+            .Where(ii => barcodes.Contains(ii.Barcode))
+            .OrderBy(ii => ii.Id)
+            .Select(ii => new
+            {
+                ii.Barcode,
+                ii.ItemNumber,
+                ii.Variant,
+                ii.Description
+            })
+            .ToListAsync();
+
+        var itemInfoByBarcode = itemInfos
+            .GroupBy(ii => ii.Barcode)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        return scans.Select(scan =>
+        {
+            var orderStat = orderStats.GetValueOrDefault(scan.OrderId);
+            itemInfoByBarcode.TryGetValue(scan.Barcode, out var itemInfo);
+
+            return new PricingScanRow
+            {
+                TimeStamp = scan.TimeStamp,
+                Barcode = scan.Barcode,
+                ItemNumber = itemInfo?.ItemNumber ?? string.Empty,
+                Variant = itemInfo?.Variant ?? string.Empty,
+                Description = itemInfo?.Description ?? string.Empty,
+                OrderNumber = scan.OrderNumber,
+                ShipmentNumber = scan.ShipmentNumber,
+                OrderTotalQuantity = (orderStat?.TotalQuantity ?? 0).ToString(),
+                OrderTotalScanned = (orderStat?.TotalScanned ?? 0).ToString(),
+                OrderTotalBoxes = (orderStat?.TotalBoxes ?? 0).ToString(),
+                UserId = scan.UserId,
+                Username = scan.Username,
+                Origin = scan.Origin,
+                Destination = scan.Destination,
+                OriginCode = scan.OriginCode,
+                DestinationCode = scan.DestinationCode,
+                BoxId = scan.BoxId,
+                Quantity = 1,
+                BoxNumber = scan.BoxNumber
+            };
+        }).ToList();
     }
 }
