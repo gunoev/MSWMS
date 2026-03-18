@@ -21,11 +21,13 @@ public class ReportController : ControllerBase
     public async Task<ActionResult<List<PricingScanRow>>> GetPricingScansReport(
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate,
+        [FromQuery] string? shippingId = null,
         [FromQuery] string? transferShipmentNumber = null,
         [FromQuery] string? transferOrderNumber = null)
     {
         var hasTransferSearch = !string.IsNullOrWhiteSpace(transferShipmentNumber) ||
-                                !string.IsNullOrWhiteSpace(transferOrderNumber);
+                                !string.IsNullOrWhiteSpace(transferOrderNumber) ||
+                                !string.IsNullOrWhiteSpace(shippingId);
 
         if (!hasTransferSearch && (!startDate.HasValue || !endDate.HasValue))
         {
@@ -45,6 +47,7 @@ public class ReportController : ControllerBase
         var rows = await _reportService.GetPricingScanReportAsync(
             startDate,
             endDate,
+            shippingId,
             transferShipmentNumber,
             transferOrderNumber);
         return Ok(rows);

@@ -16,14 +16,17 @@ public class ReportService
     public async Task<List<PricingScanRow>> GetPricingScanReportAsync(
         DateTime? startDate,
         DateTime? endDate,
+        string? shippingId = null,
         string? transferShipmentNumber = null,
         string? transferOrderNumber = null)
     {
         transferShipmentNumber = transferShipmentNumber?.Trim();
         transferOrderNumber = transferOrderNumber?.Trim();
+        shippingId = shippingId?.Trim();
 
         var hasTransferSearch = !string.IsNullOrWhiteSpace(transferShipmentNumber) ||
-                                !string.IsNullOrWhiteSpace(transferOrderNumber);
+                                !string.IsNullOrWhiteSpace(transferOrderNumber) || 
+                                !string.IsNullOrWhiteSpace(shippingId);
 
         var query = _context.Scans
             .AsNoTracking()
@@ -41,6 +44,12 @@ public class ReportService
             {
                 var orderSearch = transferOrderNumber.ToLower();
                 query = query.Where(s => s.Order.TransferOrderNumber.ToLower() == orderSearch);
+            }
+
+            if (!string.IsNullOrWhiteSpace(shippingId))
+            {
+                var shippingIdSearch = shippingId.ToLower();
+                query = query.Where(s => s.Order.ShipmentId.ToLower() == shippingIdSearch);
             }
         }
         else if (startDate.HasValue && endDate.HasValue)
