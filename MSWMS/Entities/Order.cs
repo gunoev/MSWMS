@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MSWMS.Entities;
 
 public class Order
@@ -5,6 +7,7 @@ public class Order
     public int Id { get; set; }
     public required string TransferOrderNumber { get; set; }
     public required string TransferShipmentNumber { get; set; }
+    [MaxLength(512)] public string ShipToContact { get; set; }
     public required Location Origin { get; set; }
     public required Location Destination { get; set; }
     public OrderStatus Status { get; set; } = OrderStatus.New;

@@ -11,6 +11,7 @@ public class CreateOrderRequest
     public required string ShipmentId { get; set; }
     public required string TransferOrderNumber { get; set; }
     public required string TransferShipmentNumber { get; set; }
+    public string ShipToContact { get; set; } = string.Empty;
     public required int OriginId { get; set; }
     public required int DestinationId { get; set; }
     public required int UserId { get; set; }
