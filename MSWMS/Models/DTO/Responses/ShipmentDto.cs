@@ -1,3 +1,5 @@
+using MSWMS.Entities;
+
 namespace MSWMS.Models.Responses;
 
 public class ShipmentDto
@@ -9,5 +11,6 @@ public class ShipmentDto
     public DateTime Scheduled { get; set; }
     public int TotalBoxes { get; set; }
     public bool IsCompleted { get; set; }
+    public ShipmentStatus Status { get; set; }
     public ICollection<ShipmentOrderDto>? Orders { get; set; }
 }
