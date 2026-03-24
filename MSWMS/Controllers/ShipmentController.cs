@@ -106,20 +106,20 @@ namespace MSWMS.Controllers
                 Destination = s.Destination.Name, 
                 CreatedAt = s.CreatedAt,
                 Scheduled = s.Scheduled,
+                Status = s.Status,
                 TotalBoxes = s.Orders.Sum(o => boxCountDict.GetValueOrDefault(o.Id, 0)),
                 IsCompleted = false,
                 Orders = s.Orders.Select(o => 
                 {
                     var dto = _mapper.Map<ShipmentOrderDto>(o);
 
-                    // Получаем список коробок конкретно для этой связки Shipment + Order
                     var loadedBoxesForThisShipment = shipmentOrderEvents.GetValueOrDefault((s.Id, o.Id), new List<int>());
 
                     dto.LoadedBoxes = loadedBoxesForThisShipment.Count;
                     dto.Boxes = boxCountDict.GetValueOrDefault(o.Id, 0);
-                        
-                    // Считаем items только для коробок, загруженных в ЭТОТ shipment
+                    
                     dto.TotalLoadedItems = loadedBoxesForThisShipment.Sum(boxId => boxItemCountDict.GetValueOrDefault(boxId, 0));
+                    dto.TotalCollectedItems = scanCounts.FirstOrDefault(c => c.OrderId == o.Id)?.Count ?? 0;
                         
                     return dto;
                 }).ToList()
@@ -154,6 +154,38 @@ namespace MSWMS.Controllers
             };
             
             return stat;
+        }
+
+        [HttpPost("shipment-status")]
+        [Authorize(Policy = Policies.RequireDispatcher)]
+        public async Task<ActionResult> ChangeShipmentStatus(int shipmentId, ShipmentStatus status, CancellationToken ct = default)
+        {
+            var shipment = await _context.Shipments.Where(s => s.Id == shipmentId).FirstOrDefaultAsync(ct);
+            
+            if (shipment == null)
+            {
+                return NotFound();
+            }
+
+            if (shipment.Scheduled.Date < DateTime.Now.Date)
+            {
+                return BadRequest("Cannot change status for past shipments");
+            }
+
+            if (shipment.Status != ShipmentStatus.Scheduled && status == ShipmentStatus.Scheduled)
+            {
+                return BadRequest("Cannot change status to Scheduled");
+            }
+
+            if (shipment.Status == status)
+            {
+                return Ok();
+            }
+            
+            shipment.Status = status;
+            await _context.SaveChangesAsync(ct);
+            
+            return Ok();
         }
 
         // PUT: api/Shipment/5
